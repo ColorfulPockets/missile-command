@@ -15,7 +15,8 @@ import Model.Player
 control :: PlayState -> BrickEvent n Tick -> EventM n (Next PlayState)
 control s ev = case ev of 
   AppEvent Tick                   -> nextS s =<< liftIO (play O s)
-  T.VtyEvent (V.EvKey V.KEnter _) -> nextS s =<< liftIO (play X s)
+  T.VtyEvent (V.EvKey V.KEnter _) -> nextS s =<< liftIO (play X s)    
+  T.VtyEvent (V.EvKey (V.KChar ' ') _) -> nextS s =<< liftIO (shoot s)              -- when space bar is clicked, a missile is shot
   T.VtyEvent (V.EvKey V.KUp   _)  -> Brick.continue (move up    s)
   T.VtyEvent (V.EvKey V.KDown _)  -> Brick.continue (move down  s)
   T.VtyEvent (V.EvKey V.KLeft _)  -> Brick.continue (move left  s)
@@ -27,6 +28,11 @@ control s ev = case ev of
 move :: (Pos -> Pos) -> PlayState -> PlayState
 -------------------------------------------------------------------------------
 move f s = s { psPos = f (psPos s) }
+
+-------------------------------------------------------------------------------
+shoot :: PlayState -> IO (Result Board)
+-------------------------------------------------------------------------------
+shoot s = return (remove (psBoard s) (psPos s))
 
 -------------------------------------------------------------------------------
 play :: XO -> PlayState -> IO (Result Board)

@@ -11,6 +11,7 @@ module Model.Board
   , (!)
   , init
   , put
+  , remove
   , positions
   , emptyPositions
   , boardWinner
@@ -48,7 +49,7 @@ data Pos = Pos
 board ! pos = M.lookup pos board
 
 dim :: Int
-dim = 3
+dim = 5
 
 positions :: [Pos]
 positions = [ Pos r c | r <- [1..dim], c <- [1..dim] ] 
@@ -74,6 +75,11 @@ put :: Board -> XO -> Pos -> Result Board
 put board xo pos = case M.lookup pos board of 
   Just _  -> Retry
   Nothing -> result (M.insert pos xo board) 
+
+remove :: Board -> Pos -> Result Board
+remove board pos = case M.lookup pos board of 
+  Nothing  -> Retry
+  Just _ -> result (M.delete pos board) 
 
 result :: Board -> Result Board
 result b 
