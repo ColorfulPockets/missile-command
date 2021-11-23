@@ -17,10 +17,10 @@ control s ev = case ev of
   AppEvent Tick                   -> nextS s =<< liftIO (play O s)
   T.VtyEvent (V.EvKey V.KEnter _) -> nextS s =<< liftIO (play X s)    
   T.VtyEvent (V.EvKey (V.KChar ' ') _) -> nextS s =<< liftIO (shoot s)              -- when space bar is clicked, a missile is shot
-  T.VtyEvent (V.EvKey V.KUp   _)  -> Brick.continue (move up    s)
-  T.VtyEvent (V.EvKey V.KDown _)  -> Brick.continue (move down  s)
-  T.VtyEvent (V.EvKey V.KLeft _)  -> Brick.continue (move left  s)
-  T.VtyEvent (V.EvKey V.KRight _) -> Brick.continue (move right s)
+  T.VtyEvent (V.EvKey V.KUp   _)  -> nextS (move up s) =<< liftIO (play O (s))
+  T.VtyEvent (V.EvKey V.KDown _)  -> nextS (move down s) =<< liftIO (play O (s))
+  T.VtyEvent (V.EvKey V.KLeft _)  -> nextS (move left s) =<< liftIO (play O (s))
+  T.VtyEvent (V.EvKey V.KRight _) -> nextS (move right s) =<< liftIO (play O (s))
   T.VtyEvent (V.EvKey V.KEsc _)   -> Brick.halt s
   _                               -> Brick.continue s -- Brick.halt s
 
