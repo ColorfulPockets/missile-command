@@ -32,17 +32,21 @@ move f s = s { psPos = f (psPos s) }
 -------------------------------------------------------------------------------
 shoot :: PlayState -> IO (Result Board)
 -------------------------------------------------------------------------------
-shoot s = return (remove (psBoard s) (psPos s))
+shoot s = return (result (remove (psBoard s) (psPos s)))
 
 -------------------------------------------------------------------------------
 play :: XO -> PlayState -> IO (Result Board)
 -------------------------------------------------------------------------------
 play xo s
-  | psTurn s == xo = put (psBoard s) xo <$> getPos xo s 
+  | psTurn s == xo = putAndRemove (psBoard s) xo <$> getPos xo s 
   | otherwise      = return Retry
 
-getPos :: XO -> PlayState -> IO Pos
-getPos xo s = getStrategy xo s (psPos s) (psBoard s) xo
+getPos :: XO -> PlayState -> IO (Pos, Pos)
+getPos xo s = do
+  (p, del) <- getStrategy xo s (psPos s) (psBoard s) xo
+  case del of
+    Nothing -> return (p, Pos 0 0)
+    Just x  -> return (p, x)
 
 getStrategy :: XO -> PlayState -> Strategy 
 getStrategy X s = plStrat (psX s)
