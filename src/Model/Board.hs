@@ -16,6 +16,9 @@ module Model.Board
   , emptyPositions
   , boardWinner
   , flipXO
+  
+  , putAndRemove
+  , result
 
     -- * Moves
   , up
@@ -54,8 +57,14 @@ dim = 50
 positions :: [Pos]
 positions = [ Pos r c | r <- [1..dim], c <- [1..dim] ] 
 
+rTop :: [Pos]
+rTop = [Pos r 4 | r <- [1..dim]] --TODO
+
 emptyPositions :: Board -> [Pos]
-emptyPositions board  = [ p | p <- positions, M.notMember p board]
+emptyPositions board  = [ p | p <- rTop, M.notMember p board] -- TODO
+
+--emptyPositions :: Board -> [Pos]
+--emptyPositions board  = [ p | p <- positions, M.notMember p board]
 
 init :: Board
 init = M.empty
@@ -74,12 +83,17 @@ data Result a
 put :: Board -> XO -> Pos -> Result Board
 put board xo pos = case M.lookup pos board of 
   Just _  -> Retry
-  Nothing -> result (M.insert pos xo board) 
+  Nothing -> result (M.insert pos xo board)
 
-remove :: Board -> Pos -> Result Board
+putAndRemove :: Board -> XO -> (Pos, Pos) -> Result Board
+putAndRemove board xo (pos, toRemove) = case M.lookup pos board of 
+  Just _  -> Retry
+  Nothing -> result (M.insert pos xo (remove board toRemove))
+
+remove :: Board -> Pos -> Board
 remove board pos = case M.lookup pos board of 
-  Nothing  -> Retry
-  Just _ -> result (M.delete pos board) 
+  Nothing  -> board
+  Just _ -> (M.delete pos board) 
 
 result :: Board -> Result Board
 result b 
@@ -135,5 +149,5 @@ boardWinner _        = Nothing
 
 flipXO :: XO -> XO
 flipXO X = O
-flipXO O = X
+flipXO O = O --TODO
 
