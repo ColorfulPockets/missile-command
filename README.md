@@ -21,3 +21,11 @@ Our biggest challenge so far has been trying to understand how to best represent
 
 ## Deadline Expectation and Goal Modifications
 We are making steady progress and believe we will be able to meet our goals for the game. It may be a little tough to add all the extra gameplay elements we listed above so if we are not able to get to all of them, we will modify our goals so that we have a complete game with basic animations, such as the missile blowing up when struck.
+
+## Libraries
+- Brick Library
+
+## Roles
+Bhavani - Working on the actions of the game (i.e. collecting user input and making a missile blow up, setting up our scoring system and making the user action reflect in the score).
+Andrew -
+Eric - 
