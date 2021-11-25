@@ -24,8 +24,9 @@ We are making steady progress and believe we will be able to meet our goals for 
 
 ## Libraries
 - Brick Library
+- vty
 
 ## Roles
 - Bhavani is working on the actions of the game (i.e. collecting user input and making a missile blow up, setting up our scoring system and making the user action reflect in the score).
-- Andrew is working on 
+- Andrew is working on graphics, game design, testing and bug fixing
 - Eric is working on 
