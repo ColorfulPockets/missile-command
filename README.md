@@ -29,4 +29,4 @@ We are making steady progress and believe we will be able to meet our goals for 
 ## Roles
 - Bhavani is working on the actions of the game (i.e. collecting user input and making a missile blow up, setting up our scoring system and making the user action reflect in the score).
 - Andrew is working on graphics, game design, testing and bug fixing
-- Eric is working on 
+- Eric is working on the logic for the falling missiles, such as making the missile travel down.
