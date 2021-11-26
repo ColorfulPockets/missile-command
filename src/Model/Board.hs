@@ -88,12 +88,12 @@ put board xo pos = case M.lookup pos board of
 putAndRemove :: Board -> XO -> (Pos, Pos) -> Result Board
 putAndRemove board xo (pos, toRemove) = case M.lookup pos board of 
   Just _  -> Retry
-  Nothing -> result (M.insert pos xo (remove board toRemove))
+  Nothing -> result (M.insert pos xo (fst (remove board toRemove)))
 
-remove :: Board -> Pos -> Board
+remove :: Board -> Pos -> (Board, Bool)
 remove board pos = case M.lookup pos board of 
-  Nothing  -> board
-  Just _ -> (M.delete pos board) 
+  Nothing -> (board, False)
+  Just _  -> ((M.delete pos board), True)
 
 result :: Board -> Result Board
 result b 

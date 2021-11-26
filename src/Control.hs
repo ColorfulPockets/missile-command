@@ -32,7 +32,23 @@ move f s = s { psPos = f (psPos s) }
 -------------------------------------------------------------------------------
 shoot :: PlayState -> IO (Result Board)
 -------------------------------------------------------------------------------
-shoot s = return (result (remove (psBoard s) (psPos s)))
+shoot s = return (result (if changed then (shootSurrounding s target) else ms))
+  where
+    target = psPos s
+    b = psBoard s
+    (ms, changed) = remove b target
+
+shootSurrounding :: PlayState -> Pos -> Board
+shootSurrounding s (Pos i j) = b'''''
+  where
+    b = psBoard s
+    (b'   , _) = remove b    (Pos (i - 1) j) -- up
+    (b''  , _) = remove b'   (Pos (i + 1) j) -- down
+    (b''' , _) = remove b''  (Pos i (j - 1)) -- left
+    (b'''', _) = remove b''' (Pos i (j + 1)) -- right
+    (b''''', _) = remove b'''' (Pos i j) -- TODO: this needs to be cleaned up
+
+--shoot s = return (result (remove (psBoard s) (psPos s))) -- TODO: blast radius
 
 -------------------------------------------------------------------------------
 play :: XO -> PlayState -> IO (Result Board)
