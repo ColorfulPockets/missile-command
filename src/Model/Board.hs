@@ -20,6 +20,9 @@ module Model.Board
   , putAndRemove
   , result
 
+  , thingPos
+  , botThing
+
     -- * Moves
   , up
   , down
@@ -65,6 +68,18 @@ emptyPositions board  = [ p | p <- rTop, M.notMember p board] -- TODO
 
 --emptyPositions :: Board -> [Pos]
 --emptyPositions board  = [ p | p <- positions, M.notMember p board]
+
+mostPos :: [Pos]
+mostPos = [Pos r c | r <- [1..(dim - 1)], c <- [1..(dim - 1)]]
+
+thingPos :: Board -> [Pos]
+thingPos board = [p | p <- mostPos, M.member p board]
+
+botRow :: [Pos]
+botRow = [Pos dim c | c <- [1..(dim - 1)]]
+
+botThing :: Board -> [Pos]
+botThing board = [p | p <- botRow, M.notMember p board]
 
 init :: Board
 init = M.empty

@@ -27,7 +27,22 @@ rando = Player "machine" travel
 --randomStrategy _ b _ = fetchZero (emptyPositions b)
 
 travel :: a -> Board -> b -> IO (Pos, Maybe Pos)
-travel _ b _ = deleteTrail b 0
+travel _ b _ = delTrail b p
+  where
+    t = thingPos b
+    p = trailHelper t b
+
+
+trailHelper :: [Pos] -> Board -> Pos
+trailHelper [] b = Pos 1 y
+  where
+    (Pos _ y) = botThing b !! 0
+
+trailHelper (x:xs) b = x
+
+
+delTrail :: Board -> Pos -> IO (Pos, Maybe Pos)
+delTrail b (Pos i j) = return ((Pos (i + 1) j), Just (Pos i j))
 
 
 deleteTrail :: Board -> Int -> IO (Pos, Maybe Pos)
