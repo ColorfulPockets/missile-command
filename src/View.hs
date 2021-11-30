@@ -7,6 +7,7 @@ import Brick.Widgets.Border.Style (unicode)
 import Text.Printf (printf)
 
 import Model
+import qualified Model.Score  as Score
 import Model.Board
 import Graphics.Vty hiding (dim)
 
@@ -23,7 +24,7 @@ view' s =
       vTile [ mkRow s row | row <- [1..dim] ]
 
 header :: PlayState -> String
-header s = printf "Missile Command! Missiles Destroyed: = %s" (show (psTurn s))
+header s = printf " Missile Command! Missiles Destroyed: = %s " (show (Score.get (psScore s) X))
 
 mkRow :: PlayState -> Int -> Widget n
 mkRow s row = hTile [ mkCell s row i | i <- [1..dim] ]

@@ -6,6 +6,7 @@ import qualified Brick.Types as T
 
 import Model
 import Model.Board
+import qualified Model.Score as Score
 import Control.Monad.IO.Class (MonadIO(liftIO))
 import Model.Player
 -- import Model.Player 
@@ -32,11 +33,22 @@ move f s = s { psPos = f (psPos s) }
 -------------------------------------------------------------------------------
 shoot :: PlayState -> IO (Result Board)
 -------------------------------------------------------------------------------
-shoot s = return (result (if changed then (shootSurrounding s target) else ms))
+--shoot s = return (result (if changed then (updateScoreAndShoot s target) else ms))
+shoot s = return (if changed then (Model.Board.UpdateScore (shootSurrounding s target)) else result(ms))
   where
     target = psPos s
     b = psBoard s
     (ms, changed) = remove b target
+
+--updateScoreAndShoot :: PlayState -> Pos -> Board
+--updateScoreAndShoot s target = b
+  --where
+    --b = shootSurrounding s target
+    ---_ = s { psScore = (Score.add (psScore s) (Just Model.Board.X)) }
+    --sc' = (Score.add (psScore s) (Just X))
+    --s'   = s { psScore = sc' }
+    ---_ = Model.next s (Model.Board.UpdateScore b)
+
 
 shootSurrounding :: PlayState -> Pos -> Board
 shootSurrounding s (Pos i j) = b'''''

@@ -93,6 +93,7 @@ data Result a
   | Win XO
   | Retry 
   | Cont a
+  | UpdateScore a
   deriving (Eq, Functor, Show)
 
 put :: Board -> XO -> Pos -> Result Board
