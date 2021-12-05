@@ -40,9 +40,21 @@ trailHelper [] b = Pos 1 y
 
 trailHelper (x:xs) b = x
 
+-- The list of possible amounts for a missile to move left or right, biased toward straight down so that paths aren't as chaotic.
+leftRightTravelAmounts :: [Int]
+leftRightTravelAmounts = [-2,-1, -1, 0,0,0, 1,1,2]
+
+genIndexOnBoard :: Int -> IO (Int)
+genIndexOnBoard j = do
+  index <- randomRIO (0, (length leftRightTravelAmounts) - 1)
+  if (j + (leftRightTravelAmounts !! index)) < dim && (j + (leftRightTravelAmounts !! index)) >0
+    then return index
+  else genIndexOnBoard j
 
 delTrail :: Board -> Pos -> IO (Pos, Maybe Pos)
-delTrail b (Pos i j) = return ((Pos (i + 1) j), Just (Pos i j))
+delTrail b (Pos i j) = do
+  index <- genIndexOnBoard j
+  return ((Pos (i + 1) (j + (leftRightTravelAmounts !! index))), Just (Pos i j))
 
 
 deleteTrail :: Board -> Int -> IO (Pos, Maybe Pos)
