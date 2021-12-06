@@ -76,10 +76,17 @@ thingPos :: Board -> [Pos]
 thingPos board = [p | p <- mostPos, M.member p board]
 
 botRow :: [Pos]
-botRow = [Pos dim c | c <- [1..(dim - 1)]]
+botRow = [Pos dim c | c <- [1..dim]]
+
+--botThing :: Board -> [Pos]
+--botThing board = [p | p <- botRow, M.notMember p board]
 
 botThing :: Board -> [Pos]
-botThing board = [p | p <- botRow, M.notMember p board]
+botThing b = [Pos dim c | c <- [1..dim], notIn b dim c]
+
+notIn :: Board -> Int -> Int -> Bool
+notIn b 0 _ = True
+notIn b r c = if M.notMember (Pos r c) b then notIn b (r - 1) c else False
 
 init :: Board
 init = M.empty

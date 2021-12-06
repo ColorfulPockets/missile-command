@@ -15,10 +15,10 @@ data Player = Player
 type Strategy = Pos     -- ^ current cursor
              -> Board   -- ^ current board
              -> XO      -- ^ naught or cross
-             -> IO (Pos, Maybe Pos)  -- ^ next move
+             -> IO (Pos, Pos)  -- ^ next move
 
 human :: Player 
-human = Player "human" (\p _ _ -> return (p, Nothing))
+human = Player "human" (\p _ _ -> return (p, (Pos 0 0)))
 
 rando :: Player 
 rando = Player "machine" travel
@@ -26,34 +26,46 @@ rando = Player "machine" travel
 --randomStrategy :: a -> Board -> b -> IO Pos
 --randomStrategy _ b _ = fetchZero (emptyPositions b)
 
-travel :: a -> Board -> b -> IO (Pos, Maybe Pos)
-travel _ b _ = delTrail b p
+travel :: a -> Board -> b -> IO (Pos, Pos)
+travel _ b _ = do
+  p <- trailHelper t b
+  delTrail b p
   where
     t = thingPos b
-    p = trailHelper t b
+    --p = trailHelper t b
 
 
-trailHelper :: [Pos] -> Board -> Pos
-trailHelper [] b = Pos 1 y
+trailHelper :: [Pos] -> Board -> IO Pos
+trailHelper [] b = return (Pos 1 y)
   where
     (Pos _ y) = botThing b !! 0
 
-trailHelper (x:xs) b = x
+trailHelper (x:xs) b = do
+  i <- randomRIO (0, 50) :: IO Int
+  if i == 0 then
+    do
+      (Pos _ y) <- fetcher b
+      return (if y == 0 then x else (Pos 1 y))
+  else
+    return x
+--  where
+--    (Pos _ y) = botThing b !! 0
 
 
-delTrail :: Board -> Pos -> IO (Pos, Maybe Pos)
-delTrail b (Pos i j) = return ((Pos (i + 1) j), Just (Pos i j))
+fetcher :: Board -> IO Pos
+fetcher b = do
+  allPos <- converter b
+  case allPos of
+    [] -> return (Pos 0 0)
+    _  -> do
+      i <- randomRIO (0, (length allPos - 1))
+      return (allPos !! i)
 
+converter :: Board -> IO [Pos]
+converter b = return (botThing b)
 
-deleteTrail :: Board -> Int -> IO (Pos, Maybe Pos)
-deleteTrail b i
-  | i < dim = case b ! (Pos i 4) of
-
-    Just _ -> return (Pos (i + 1) 4, Just (Pos i 4))
-
-    _      -> deleteTrail b (i + 1)
-
-  | otherwise = return (Pos 1 4, Nothing)
+delTrail :: Board -> Pos -> IO (Pos, Pos)
+delTrail b (Pos i j) = return ((Pos (i + 1) j), (Pos i j))
 
 
 fetchZero :: [a] -> IO a

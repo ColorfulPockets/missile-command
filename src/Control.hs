@@ -72,9 +72,7 @@ play xo s
 getPos :: XO -> PlayState -> IO (Pos, Pos)
 getPos xo s = do
   (p, del) <- getStrategy xo s (psPos s) (psBoard s) xo
-  case del of
-    Nothing -> return (p, Pos 0 0)
-    Just x  -> return (p, x)
+  return (p, del)
 
 getStrategy :: XO -> PlayState -> Strategy 
 getStrategy X s = plStrat (psX s)
