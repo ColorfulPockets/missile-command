@@ -66,10 +66,10 @@ shootSurrounding s (Pos i j) = b'''''
 play :: XO -> PlayState -> IO (Result Board)
 -------------------------------------------------------------------------------
 play xo s
-  | psTurn s == xo = putAndRemove (psBoard s) xo <$> getPos xo s 
+  | psTurn s == xo = putAndRemove2 (psBoard s) xo <$> getPos xo s 
   | otherwise      = return Retry
 
-getPos :: XO -> PlayState -> IO (Pos, Pos)
+getPos :: XO -> PlayState -> IO ([Pos], [Pos])
 getPos xo s = do
   (p, del) <- getStrategy xo s (psPos s) (psBoard s) xo
   return (p, del)

@@ -15,10 +15,10 @@ data Player = Player
 type Strategy = Pos     -- ^ current cursor
              -> Board   -- ^ current board
              -> XO      -- ^ naught or cross
-             -> IO (Pos, Pos)  -- ^ next move
+             -> IO ([Pos], [Pos])  -- ^ next move
 
 human :: Player 
-human = Player "human" (\p _ _ -> return (p, (Pos 0 0)))
+human = Player "human" (\p _ _ -> return ([p], []))
 
 rando :: Player 
 rando = Player "machine" travel
@@ -26,28 +26,37 @@ rando = Player "machine" travel
 --randomStrategy :: a -> Board -> b -> IO Pos
 --randomStrategy _ b _ = fetchZero (emptyPositions b)
 
-travel :: a -> Board -> b -> IO (Pos, Pos)
+travel :: a -> Board -> b -> IO ([Pos], [Pos])
 travel _ b _ = do
-  p <- trailHelper t b
-  delTrail b p
+  posL <- trailHelper t b
+  trailConvert (delTrailIter posL)
   where
     t = thingPos b
     --p = trailHelper t b
 
 
-trailHelper :: [Pos] -> Board -> IO Pos
-trailHelper [] b = return (Pos 1 y)
+trailConvert :: [(Pos, Pos)] -> IO ([Pos], [Pos])
+trailConvert p = return (unzip p)
+
+
+delTrailIter :: [Pos] -> [(Pos, Pos)]
+delTrailIter []               = []
+delTrailIter (e@(Pos i j):xs) = ((Pos (i + 1) j), e) : delTrailIter xs
+
+
+trailHelper :: [Pos] -> Board -> IO [Pos]
+trailHelper [] b = return [Pos 1 y]
   where
     (Pos _ y) = botThing b !! 0
 
-trailHelper (x:xs) b = do
+trailHelper xs b = do
   i <- randomRIO (0, 50) :: IO Int
   if i == 0 then
     do
       (Pos _ y) <- fetcher b
-      return (if y == 0 then x else (Pos 1 y))
+      return (if y == 0 then xs else (Pos 1 y) : xs)
   else
-    return x
+    return xs
 --  where
 --    (Pos _ y) = botThing b !! 0
 
@@ -64,8 +73,8 @@ fetcher b = do
 converter :: Board -> IO [Pos]
 converter b = return (botThing b)
 
-delTrail :: Board -> Pos -> IO (Pos, Pos)
-delTrail b (Pos i j) = return ((Pos (i + 1) j), (Pos i j))
+--delTrail :: Board -> Pos -> IO (Pos, Pos)
+--delTrail b (Pos i j) = return ((Pos (i + 1) j), (Pos i j))
 
 
 fetchZero :: [a] -> IO a
