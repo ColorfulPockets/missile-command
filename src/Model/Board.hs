@@ -17,7 +17,7 @@ module Model.Board
   , boardWinner
   , flipXO
   
-  , putAndRemove
+  , putAndRemove2
   , result
 
   , thingPos
@@ -70,16 +70,23 @@ emptyPositions board  = [ p | p <- rTop, M.notMember p board] -- TODO
 --emptyPositions board  = [ p | p <- positions, M.notMember p board]
 
 mostPos :: [Pos]
-mostPos = [Pos r c | r <- [1..(dim - 1)], c <- [1..(dim - 1)]]
+mostPos = [Pos r c | r <- [1..(dim - 1)], c <- [1..dim]]
 
 thingPos :: Board -> [Pos]
 thingPos board = [p | p <- mostPos, M.member p board]
 
 botRow :: [Pos]
-botRow = [Pos dim c | c <- [1..(dim - 1)]]
+botRow = [Pos dim c | c <- [1..dim]]
+
+--botThing :: Board -> [Pos]
+--botThing board = [p | p <- botRow, M.notMember p board]
 
 botThing :: Board -> [Pos]
-botThing board = [p | p <- botRow, M.notMember p board]
+botThing b = [Pos dim c | c <- [1..dim], notIn b dim c]
+
+notIn :: Board -> Int -> Int -> Bool
+notIn b 0 _ = True
+notIn b r c = if M.notMember (Pos r c) b then notIn b (r - 1) c else False
 
 init :: Board
 init = M.empty
@@ -101,10 +108,30 @@ put board xo pos = case M.lookup pos board of
   Just _  -> Retry
   Nothing -> result (M.insert pos xo board)
 
-putAndRemove :: Board -> XO -> (Pos, Pos) -> Result Board
-putAndRemove board xo (pos, toRemove) = case M.lookup pos board of 
-  Just _  -> Retry
-  Nothing -> result (M.insert pos xo (fst (remove board toRemove)))
+--putAndRemove :: Board -> XO -> (Pos, Pos) -> Result Board
+--putAndRemove board xo (pos, toRemove) = case M.lookup pos board of 
+--  Just _  -> Retry
+--  Nothing -> result (M.insert pos xo (fst (remove board toRemove)))
+
+putAndRemove2 :: Board -> XO -> ([Pos], [Pos]) -> Result Board
+putAndRemove2 board xo (pos, toRemove) = result (iterI b' xo pos)
+  where
+    b' = iterR board toRemove
+
+
+iterR :: Board -> [Pos] -> Board
+iterR b []       = b
+iterR b (pos:xs) = iterR b' xs
+  where
+    b' = fst (remove b pos)
+
+
+iterI :: Board -> XO -> [Pos] -> Board
+iterI b xo []       = b
+iterI b xo (pos:xs) = iterI b' xo xs
+  where
+    b' = M.insert pos xo b
+
 
 remove :: Board -> Pos -> (Board, Bool)
 remove board pos = case M.lookup pos board of 
