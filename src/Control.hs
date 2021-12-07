@@ -8,20 +8,20 @@ import Model
 import Model.Board
 import qualified Model.Score as Score
 import Control.Monad.IO.Class (MonadIO(liftIO))
-import Model.Player
+-- import Model.Player
 -- import Model.Player 
 
 -------------------------------------------------------------------------------
 
 control :: PlayState -> BrickEvent n Tick -> EventM n (Next PlayState)
 control s ev = case ev of 
-  AppEvent Tick                   -> nextS s =<< liftIO (play O s)
-  T.VtyEvent (V.EvKey V.KEnter _) -> nextS s =<< liftIO (play X s)    
+  AppEvent Tick                   -> nextS s =<< liftIO (progressBoard s)
+  T.VtyEvent (V.EvKey V.KEnter _) -> nextS s =<< liftIO (progressBoard s)    
   T.VtyEvent (V.EvKey (V.KChar ' ') _) -> nextS s =<< liftIO (shoot s)              -- when space bar is clicked, a missile is shot
-  T.VtyEvent (V.EvKey V.KUp   _)  -> nextS (move up s) =<< liftIO (play O (s))
-  T.VtyEvent (V.EvKey V.KDown _)  -> nextS (move down s) =<< liftIO (play O (s))
-  T.VtyEvent (V.EvKey V.KLeft _)  -> nextS (move left s) =<< liftIO (play O (s))
-  T.VtyEvent (V.EvKey V.KRight _) -> nextS (move right s) =<< liftIO (play O (s))
+  T.VtyEvent (V.EvKey V.KUp   _)  -> nextS (move up s) =<< liftIO (progressBoard (s))
+  T.VtyEvent (V.EvKey V.KDown _)  -> nextS (move down s) =<< liftIO (progressBoard (s))
+  T.VtyEvent (V.EvKey V.KLeft _)  -> nextS (move left s) =<< liftIO (progressBoard (s))
+  T.VtyEvent (V.EvKey V.KRight _) -> nextS (move right s) =<< liftIO (progressBoard (s))
   T.VtyEvent (V.EvKey V.KEsc _)   -> Brick.halt s
   _                               -> Brick.continue s -- Brick.halt s
 
@@ -31,10 +31,10 @@ move :: (Pos -> Pos) -> PlayState -> PlayState
 move f s = s { psPos = f (psPos s) }
 
 -------------------------------------------------------------------------------
-shoot :: PlayState -> IO (Result Board)
+shoot :: PlayState -> IO (Board)
 -------------------------------------------------------------------------------
 --shoot s = return (result (if changed then (updateScoreAndShoot s target) else ms))
-shoot s = return (if changed then (Model.Board.UpdateScore (shootSurrounding s target)) else result(ms))
+shoot s = return (if changed then ((shootSurrounding s target)) else (ms))
   where
     target = psPos s
     b = psBoard s
@@ -62,27 +62,28 @@ shootSurrounding s (Pos i j) = b'''''
 
 --shoot s = return (result (remove (psBoard s) (psPos s))) -- TODO: blast radius
 
--------------------------------------------------------------------------------
-play :: XO -> PlayState -> IO (Result Board)
--------------------------------------------------------------------------------
-play xo s
-  | psTurn s == xo = putAndRemove2 (psBoard s) xo <$> getPos xo s 
-  | otherwise      = return Retry
 
-getPos :: XO -> PlayState -> IO ([Pos], [Pos])
-getPos xo s = do
-  (p, del) <- getStrategy xo s (psPos s) (psBoard s) xo
+getPos :: PlayState -> IO ([Pos], [Pos])
+getPos s = do
+  (p, del) <- travel (psBoard s)
   return (p, del)
 
-getStrategy :: XO -> PlayState -> Strategy 
-getStrategy X s = plStrat (psX s)
-getStrategy O s = plStrat (psO s)
+-- This function controls how things on the board change.
+-- If you want to change the board, start here.
+-------------------------------------------------------------------------------
+progressBoard :: PlayState -> IO (Board)
+-------------------------------------------------------------------------------
+progressBoard s = 
+  putAndRemove2 (psBoard s) <$> getPos s -- this line moves all the misiles downward
+  -- Add other lines here for anything in the board state that should change every tick (such as explosion animations)
 
+
+-- TODO: This is where the score should be updated, I think
 -------------------------------------------------------------------------------
-nextS :: PlayState -> Result Board -> EventM n (Next PlayState)
+nextS :: PlayState -> Board -> EventM n (Next PlayState)
 -------------------------------------------------------------------------------
-nextS s b = case next s b of
+nextS s b = case next s (result b) of
   Right s' -> continue s'
-  Left res -> halt (s { psResult = res }) 
+  Left res -> halt (s) 
 
 

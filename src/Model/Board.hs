@@ -15,9 +15,9 @@ module Model.Board
   , positions
   , emptyPositions
   , boardWinner
-  , flipXO
   
   , putAndRemove2
+  , travel
   , result
 
   , thingPos
@@ -33,6 +33,8 @@ module Model.Board
 
 import Prelude hiding (init)
 import qualified Data.Map as M 
+
+import System.Random -- (Random(randomRIO))
 
 -------------------------------------------------------------------------------
 -- | Board --------------------------------------------------------------------
@@ -103,18 +105,18 @@ data Result a
   | UpdateScore a
   deriving (Eq, Functor, Show)
 
-put :: Board -> XO -> Pos -> Result Board
+put :: Board -> XO -> Pos -> Board
 put board xo pos = case M.lookup pos board of 
-  Just _  -> Retry
-  Nothing -> result (M.insert pos xo board)
+  Just _  -> board
+  Nothing -> M.insert pos xo board
 
 --putAndRemove :: Board -> XO -> (Pos, Pos) -> Result Board
 --putAndRemove board xo (pos, toRemove) = case M.lookup pos board of 
 --  Just _  -> Retry
 --  Nothing -> result (M.insert pos xo (fst (remove board toRemove)))
 
-putAndRemove2 :: Board -> XO -> ([Pos], [Pos]) -> Result Board
-putAndRemove2 board xo (pos, toRemove) = result (iterI b' xo pos)
+putAndRemove2 :: Board -> ([Pos], [Pos]) -> Board
+putAndRemove2 board (pos, toRemove) = (iterI b' pos)
   where
     b' = iterR board toRemove
 
@@ -126,11 +128,11 @@ iterR b (pos:xs) = iterR b' xs
     b' = fst (remove b pos)
 
 
-iterI :: Board -> XO -> [Pos] -> Board
-iterI b xo []       = b
-iterI b xo (pos:xs) = iterI b' xo xs
+iterI :: Board -> [Pos] -> Board
+iterI b []       = b
+iterI b (pos:xs) = iterI b' xs
   where
-    b' = M.insert pos xo b
+    b' = M.insert pos O b
 
 
 remove :: Board -> Pos -> (Board, Bool)
@@ -190,7 +192,85 @@ boardWinner :: Result a -> Maybe XO
 boardWinner (Win xo) = Just xo
 boardWinner _        = Nothing
 
-flipXO :: XO -> XO
-flipXO X = O
-flipXO O = O --TODO
+
+
+
+--------------------------------
+-- STUFF PREVIOUSLY IN PLAYER -- 
+--------------------------------
+
+travel :: Board -> IO ([Pos], [Pos])
+travel b = do
+  posL <- trailHelper t b
+  trail_deleted <- (delTrailIter posL)
+  trailConvert trail_deleted
+  where
+    t = thingPos b
+    --p = trailHelper t b
+
+
+trailConvert :: [(Pos, Pos)] -> IO ([Pos], [Pos])
+trailConvert p = return (unzip p)
+
+-- The list of possible amounts for a missile to move left or right, biased toward straight down so that paths aren't as chaotic.
+leftRightTravelAmounts :: [Int]
+leftRightTravelAmounts = [-2,-1, -1, 0,0,0, 1,1,2]
+
+genIndexOnBoard :: Int -> IO (Int)
+genIndexOnBoard j = do
+  index <- randomRIO (0, (length leftRightTravelAmounts) - 1)
+  if (j + (leftRightTravelAmounts !! index)) < dim && (j + (leftRightTravelAmounts !! index)) >0
+    then return index
+  else genIndexOnBoard j
+
+
+delTrailIter :: [Pos] -> IO ([(Pos, Pos)])
+delTrailIter []               = return([])
+delTrailIter (e@(Pos i j):xs) = do
+  index <- (genIndexOnBoard j)
+  newXs <- delTrailIter xs
+  return (((Pos (i + 1) (j + (leftRightTravelAmounts !! index))), e) : newXs)
+
+
+trailHelper :: [Pos] -> Board -> IO [Pos]
+trailHelper [] b = return [Pos 1 y]
+  where
+    (Pos _ y) = botThing b !! 0
+
+trailHelper xs b = do
+  i <- randomRIO (0, 50) :: IO Int
+  if i == 0 then
+    do
+      (Pos _ y) <- fetcher b
+      return (if y == 0 then xs else (Pos 1 y) : xs)
+  else
+    return xs
+--  where
+--    (Pos _ y) = botThing b !! 0
+
+
+fetcher :: Board -> IO Pos
+fetcher b = do
+  allPos <- converter b
+  case allPos of
+    [] -> return (Pos 0 0)
+    _  -> do
+      i <- randomRIO (0, (length allPos - 1))
+      return (allPos !! i)
+
+converter :: Board -> IO [Pos]
+converter b = return (botThing b)
+
+--delTrail :: Board -> Pos -> IO (Pos, Pos)
+--delTrail b (Pos i j) = return ((Pos (i + 1) j), (Pos i j))
+
+
+fetchZero :: [a] -> IO a
+fetchZero xs = do
+  return (xs !! 0)
+
+selectRandom :: [a] -> IO a
+selectRandom xs = do
+  i <- randomRIO (0, length xs - 1)
+  return (xs !! i)
 
