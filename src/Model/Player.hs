@@ -29,7 +29,8 @@ rando = Player "machine" travel
 travel :: a -> Board -> b -> IO ([Pos], [Pos])
 travel _ b _ = do
   posL <- trailHelper t b
-  trailConvert (delTrailIter posL)
+  trail_deleted <- (delTrailIter posL)
+  trailConvert trail_deleted
   where
     t = thingPos b
     --p = trailHelper t b
@@ -38,10 +39,24 @@ travel _ b _ = do
 trailConvert :: [(Pos, Pos)] -> IO ([Pos], [Pos])
 trailConvert p = return (unzip p)
 
+-- The list of possible amounts for a missile to move left or right, biased toward straight down so that paths aren't as chaotic.
+leftRightTravelAmounts :: [Int]
+leftRightTravelAmounts = [-2,-1, -1, 0,0,0, 1,1,2]
 
-delTrailIter :: [Pos] -> [(Pos, Pos)]
-delTrailIter []               = []
-delTrailIter (e@(Pos i j):xs) = ((Pos (i + 1) j), e) : delTrailIter xs
+genIndexOnBoard :: Int -> IO (Int)
+genIndexOnBoard j = do
+  index <- randomRIO (0, (length leftRightTravelAmounts) - 1)
+  if (j + (leftRightTravelAmounts !! index)) < dim && (j + (leftRightTravelAmounts !! index)) >0
+    then return index
+  else genIndexOnBoard j
+
+
+delTrailIter :: [Pos] -> IO ([(Pos, Pos)])
+delTrailIter []               = return([])
+delTrailIter (e@(Pos i j):xs) = do
+  index <- (genIndexOnBoard j)
+  newXs <- delTrailIter xs
+  return (((Pos (i + 1) (j + (leftRightTravelAmounts !! index))), e) : newXs)
 
 
 trailHelper :: [Pos] -> Board -> IO [Pos]
