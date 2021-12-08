@@ -20,15 +20,15 @@ view' :: PlayState -> Widget String
 view' s = 
   withBorderStyle unicode $
     -- border $
-    borderWithLabel (str (header s)) $
+    borderWithLabel ((str (header)) <+> (status)) $
       vTile [ mkRow s row | row <- [1..dim] ]
+        where 
+          header = printf " Missile Command! Missiles Destroyed: = %s ---- Defenses: "
+            (show (Score.get (psScore s) X)) 
+          status = case ((psTypeCooldown s) == 0) of
+            True  -> (blackForeground (greenBackground (str " Active "))) <+> (str "  ")
+            False -> (blackForeground (withX (str "   --   "))) <+> (str "  ")
 
-header :: PlayState -> String
-header s = case ((psTypeCooldown s) == 0) of
-  True  -> printf " Missile Command! Missiles Destroyed: = %s ---- Defenses: Active "
-    (show (Score.get (psScore s) X)) 
-  False -> printf " Missile Command! Missiles Destroyed: = %s ---- Defenses:   -    "
-    (show (Score.get (psScore s) X)) 
   
           
             
@@ -44,8 +44,8 @@ mkCell s r c
   where
     raw = mkCell' s r c
 
-withCursor :: Widget n -> Widget n
-withCursor = modifyDefAttr (`withStyle` reverseVideo)
+-- withCursor :: Widget n -> Widget n
+-- withCursor = modifyDefAttr (`withStyle` reverseVideo)
 
 withX :: Widget n -> Widget n
 withX = modifyDefAttr (`withBackColor` red)
@@ -55,6 +55,18 @@ withO = modifyDefAttr (`withBackColor` blue)
 
 withF :: Widget n -> Widget n
 withF = modifyDefAttr (`withBackColor` yellow)
+
+greenBackground :: Widget n -> Widget n
+greenBackground = modifyDefAttr (`withBackColor` green)
+
+blackForeground :: Widget n -> Widget n
+blackForeground = modifyDefAttr (`withForeColor` black)
+
+whiteForeground :: Widget n -> Widget n
+whiteForeground = modifyDefAttr (`withForeColor` white)
+
+blackBackground :: Widget n -> Widget n
+blackBackground = modifyDefAttr (`withBackColor` black)
 
 mkCell' :: PlayState -> Int -> Int -> Widget n
 -- mkCell' _ r c = center (str (printf "(%d, %d)" r c))
@@ -76,12 +88,12 @@ blockB, blockX, blockF :: Widget n
 -- blockB = vBox [fill ' ']
 -- blockX = vBox [fill 'X']
 -- blockO = vBox [fill 'O']
-blockB = vBox [ str "  "]
-blockX = withX (vBox [str " "])
+blockB = blackBackground (vBox [ str "  "])
+blockX = whiteForeground (vBox [str " "])
 blockF = withF (vBox [ str "  "])
 
 blockO :: Char -> Widget n
-blockO c = withO (vBox [str [c, c]])
+blockO c = blackBackground (whiteForeground (vBox [str [c, ' ']]))
 
 vTile :: [Widget n] -> Widget n
 vTile (b:bs) = vBox (b : [b | b <- bs])
