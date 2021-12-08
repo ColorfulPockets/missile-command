@@ -17,6 +17,8 @@ module Model.Board
   , emptyPositions
   , boardWinner
   
+  , findCharPos
+
   , putAndRemove2
   , travel
   , result
@@ -43,9 +45,21 @@ import System.Random -- (Random(randomRIO))
 
 type Board = M.Map Pos CellContents
 
+checkMatch :: Board -> Char -> Pos -> Bool  -- check if the char is in this position
+checkMatch board c p = case M.lookup p board of 
+  Nothing -> False
+  Just (O l) -> if l == c then True else False
+  Just _ -> False
+
+findCharPos :: Board -> Char -> [Pos] -- returns a list of positions for that letter
+findCharPos board c = [ p | p <- rTop, (checkMatch board c p)]
+
+charArray :: [Char]
+charArray = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
+
 data CellContents 
   = X 
-  | O
+  | O { letter :: Char }
   | F {distance :: Int, dir :: Direct}
   deriving (Eq, Show)
 
@@ -136,7 +150,7 @@ iterR b []       = b
 iterR b ((pos, contents):xs) = iterR b' xs
   where
     b' = case contents of
-      O -> fst (remove b pos)
+      (O _) -> fst (remove b pos)
       _      -> b
 
 
@@ -145,7 +159,7 @@ iterI b []       = b
 iterI b ((pos, contents):xs) = iterI b' xs
   where
     b' = case contents of 
-      O -> M.insert pos contents b
+      (O _) -> M.insert pos contents b
       _ -> b
 
 
@@ -158,7 +172,7 @@ result :: Board -> Result Board
 result b 
   | isFull b  = Draw
   | wins b X  = Win  X 
-  | wins b O  = Win  O
+--  | wins b O  = Win  O
   | otherwise = Cont b
 
 wins :: Board -> CellContents -> Bool
@@ -255,7 +269,9 @@ delTrailIter (e@((Pos i j), c):xs) = do
 
 -- @Bhavani: Generate new missile here by replacing the O
 trailHelper :: [(Pos, CellContents)] -> Board -> IO [(Pos, CellContents)]
-trailHelper [] b = return [((Pos 1 y), O)]
+trailHelper [] b = do
+                      i <- randomRIO (0,25)
+                      return [((Pos 1 y), (O (charArray !! i)))]
   where
     (Pos _ y) = botThing b !! 0
 
@@ -264,7 +280,8 @@ trailHelper xs b = do
   if i == 0 then
     do
       (Pos _ y) <- fetcher b
-      return (if y == 0 then xs else ((Pos 1 y), O) : xs)
+      i <- randomRIO (0,25)
+      return (if y == 0 then xs else ((Pos 1 y), (O (charArray !! i))) : xs)
   else
     return xs
 --  where

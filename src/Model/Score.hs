@@ -20,12 +20,12 @@ init n = Score n 0 0 0
 
 add :: Score -> Maybe CellContents -> Score
 add sc (Just X) = sc { scX = scX sc + 1 }
-add sc (Just O) = sc { scO = scO sc + 1 }
+add sc (Just (O _)) = sc { scO = scO sc + 1 }
 add sc Nothing  = sc { scD = scD sc + 1 }
 
 get :: Score -> CellContents -> Int
 get Score {..} X = scX 
-get Score {..} O = scO 
+get Score {..} (O _) = scO 
 
 currRound :: Score -> Int
 currRound Score {..} = scX + scO + scD + 1
@@ -33,12 +33,12 @@ currRound Score {..} = scX + scO + scD + 1
 startPlayer :: Score -> CellContents
 startPlayer sc 
   | even (currRound sc) = X
-  | otherwise           = O
+  | otherwise           = O ' '
 
 winner :: Score -> Result () 
 winner sc@Score {..}
   | scX > scO + left = Win X
-  | scO > scX + left = Win O
+  | scO > scX + left = Win (O ' ')
   | left == 0        = Draw
   | otherwise        = Cont ()
   where 
