@@ -137,7 +137,7 @@ getFs b = case b of
     (F _ _) -> p : (getFs t)
     _       -> getFs t
 
-getPos :: PlayState -> IO ([Pos], [Pos])
+getPos :: PlayState -> IO ([(Pos, CellContents)], [(Pos, CellContents)])
 getPos s = do
   (p, del) <- travel (psBoard s)
   return (p, del)

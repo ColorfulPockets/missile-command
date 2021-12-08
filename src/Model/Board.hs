@@ -92,6 +92,7 @@ botRow = [Pos dim c | c <- [1..dim]]
 --botThing :: Board -> [Pos]
 --botThing board = [p | p <- botRow, M.notMember p board]
 
+-- List of columns that don't have a missile
 botThing :: Board -> [Pos]
 botThing b = [Pos dim c | c <- [1..dim], notIn b dim c]
 
@@ -124,26 +125,28 @@ put board xo pos = case M.lookup pos board of
 --  Just _  -> Retry
 --  Nothing -> result (M.insert pos xo (fst (remove board toRemove)))
 
-putAndRemove2 :: Board -> ([Pos], [Pos]) -> Board
+putAndRemove2 :: Board -> ([(Pos, CellContents)], [(Pos, CellContents)]) -> Board
 putAndRemove2 board (pos, toRemove) = (iterI b' pos)
   where
     b' = iterR board toRemove
 
 
-iterR :: Board -> [Pos] -> Board
+iterR :: Board -> [(Pos, CellContents)] -> Board
 iterR b []       = b
-iterR b (pos:xs) = iterR b' xs
+iterR b ((pos, contents):xs) = iterR b' xs
   where
-    b' = case b ! pos of
-      Just O -> fst (remove b pos)
+    b' = case contents of
+      O -> fst (remove b pos)
       _      -> b
 
 
-iterI :: Board -> [Pos] -> Board
+iterI :: Board -> [(Pos, CellContents)] -> Board
 iterI b []       = b
-iterI b (pos:xs) = iterI b' xs
+iterI b ((pos, contents):xs) = iterI b' xs
   where
-    b' = M.insert pos O b
+    b' = case contents of 
+      O -> M.insert pos contents b
+      _ -> b
 
 
 remove :: Board -> Pos -> (Board, Bool)
@@ -210,17 +213,23 @@ boardWinner _        = Nothing
 -- STUFF PREVIOUSLY IN PLAYER -- 
 --------------------------------
 
-travel :: Board -> IO ([Pos], [Pos])
+travel :: Board -> IO ([(Pos, CellContents)], [(Pos, CellContents)])
 travel b = do
-  posL <- trailHelper t b
+  posL <- trailHelper thingsWithCells b
   trail_deleted <- (delTrailIter posL)
   trailConvert trail_deleted
   where
-    t = thingPos b
+    thingsOnBoard = thingPos b
+    thingsWithCells = posWithCellContents thingsOnBoard b
     --p = trailHelper t b
 
+posWithCellContents :: [Pos] -> Board -> [(Pos, CellContents)]
+posWithCellContents [] _ = []
+posWithCellContents (p:ps) b = case (b ! p) of
+  Just c  -> (p, c) : (posWithCellContents ps b)
+  _       -> posWithCellContents ps b
 
-trailConvert :: [(Pos, Pos)] -> IO ([Pos], [Pos])
+trailConvert :: [(a, a)] -> IO ([a], [a])
 trailConvert p = return (unzip p)
 
 -- The list of possible amounts for a missile to move left or right, biased toward straight down so that paths aren't as chaotic.
@@ -235,16 +244,18 @@ genIndexOnBoard j = do
   else genIndexOnBoard j
 
 
-delTrailIter :: [Pos] -> IO ([(Pos, Pos)])
+-- Takes a list of positions to delete, returns a list of pairs (toAdd, toRemove)
+delTrailIter :: [(Pos, CellContents)] -> IO ([((Pos, CellContents), (Pos, CellContents))])
 delTrailIter []               = return([])
-delTrailIter (e@(Pos i j):xs) = do
+delTrailIter (e@((Pos i j), c):xs) = do
   index <- (genIndexOnBoard j)
   newXs <- delTrailIter xs
-  return (((Pos (i + 1) (j + (leftRightTravelAmounts !! index))), e) : newXs)
+  return ((((Pos (i + 1) (j + (leftRightTravelAmounts !! index))), c), e) : newXs)
 
 
-trailHelper :: [Pos] -> Board -> IO [Pos]
-trailHelper [] b = return [Pos 1 y]
+-- @Bhavani: Generate new missile here by replacing the O
+trailHelper :: [(Pos, CellContents)] -> Board -> IO [(Pos, CellContents)]
+trailHelper [] b = return [((Pos 1 y), O)]
   where
     (Pos _ y) = botThing b !! 0
 
@@ -253,13 +264,14 @@ trailHelper xs b = do
   if i == 0 then
     do
       (Pos _ y) <- fetcher b
-      return (if y == 0 then xs else (Pos 1 y) : xs)
+      return (if y == 0 then xs else ((Pos 1 y), O) : xs)
   else
     return xs
 --  where
 --    (Pos _ y) = botThing b !! 0
 
 
+-- Fetch a random column that doesn't have a missile
 fetcher :: Board -> IO Pos
 fetcher b = do
   allPos <- converter b
