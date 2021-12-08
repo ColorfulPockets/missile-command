@@ -295,7 +295,7 @@ delTrailIter (e@((Pos i j), c):xs) = do
 -- @Bhavani: Generate new missile here by replacing the O
 trailHelper :: [(Pos, CellContents)] -> Board -> Int -> IO [(Pos, CellContents)]
 trailHelper [] b _ = do
-                      c <- randomRIO ('a', 'z') :: IO Char
+                      c <- randomRIO ('A', 'Z') :: IO Char
                       return [((Pos 1 y), (O c))]
   where
     (Pos _ y) = botThing b !! 0
@@ -305,7 +305,7 @@ trailHelper xs b n = do
   if i == 0 then
     do
       (Pos _ y) <- fetcher b
-      c <- randomRIO ('a', 'z') :: IO Char
+      c <- randomRIO ('A', 'Z') :: IO Char
       return (if y == 0 then xs else ((Pos 1 y), (O c)) : xs)
   else
     return xs

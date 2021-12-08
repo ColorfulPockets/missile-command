@@ -19,14 +19,16 @@ control :: PlayState -> BrickEvent n Tick -> EventM n (Next PlayState)
 control s ev = case ev of 
   AppEvent Tick                   -> nextS s =<< liftIO (progressBoard s)
   T.VtyEvent (V.EvKey V.KEnter _) -> nextS s =<< liftIO (progressBoard s)    
---  T.VtyEvent (V.EvKey (V.KChar ' ') _) -> nextS s =<< liftIO (shoot s)              -- when space bar is clicked, a missile is shot
-  -- T.VtyEvent (V.EvKey V.KUp   _)  -> nextS (move up s) =<< liftIO (progressBoard (s))
-  -- T.VtyEvent (V.EvKey V.KDown _)  -> nextS (move down s) =<< liftIO (progressBoard (s))
-  -- T.VtyEvent (V.EvKey V.KLeft _)  -> nextS (move left s) =<< liftIO (progressBoard (s))
-  -- T.VtyEvent (V.EvKey V.KRight _) -> nextS (move right s) =<< liftIO (progressBoard (s))
   T.VtyEvent (V.EvKey V.KEsc _)   -> Brick.halt s
-  T.VtyEvent (V.EvKey (V.KChar c) _) -> nextS s =<< liftIO (shootChar s (toLower c))              -- when a certain letter is clicked, that missile is shot
+  T.VtyEvent (V.EvKey (V.KChar c) _) -> case psTypeCooldown s of
+    0 -> nextS (s {psTypeCooldown = cooldownLength}) =<< liftIO (shootChar s (toUpper c))    -- when a certain letter is clicked, that missile is shot
+    _ -> nextS s =<< liftIO (progressBoard s)
   _                               -> Brick.continue s -- Brick.halt s
+
+
+-- number of ticks between typing at max speed
+cooldownLength :: Int
+cooldownLength = 15
 
 -------------------------------------------------------------------------------
 --move :: (Pos -> Pos) -> PlayState -> PlayState
@@ -88,10 +90,13 @@ nextS :: PlayState -> Board -> EventM n (Next PlayState)
 -------------------------------------------------------------------------------
 nextS s b = case next s (result b) of
   Right s' -> case missileCounter of
-    1 -> continue s' {psMoveMissiles = 0}
-    _ -> continue s' {psMoveMissiles = missileCounter + 1}
+    1 -> continue s'' {psMoveMissiles = 0}
+    _ -> continue s'' {psMoveMissiles = missileCounter + 1}
     where
       missileCounter = psMoveMissiles s' 
-  Left res -> halt (s) 
+      s''            = case psTypeCooldown s' of
+        0 -> s'
+        _ -> s' {psTypeCooldown = (psTypeCooldown s') - 1}
+  Left _ -> halt (s) 
 
 

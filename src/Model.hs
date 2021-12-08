@@ -25,7 +25,8 @@ data PlayState = PS
   , psPos    :: Board.Pos       -- ^ current cursor
   , psResult :: Board.Result () -- ^ result
   , prog     :: Int     
-  , psMoveMissiles :: Int
+  , psMoveMissiles :: Int       -- Loops between 0 and ; missiles only move when it's 0
+  , psTypeCooldown :: Int         -- Counts down the typing cooldown
   } 
 
 init :: Int -> PlayState
@@ -36,6 +37,7 @@ init n = PS
   , psResult = Board.Cont ()
   , prog     = 100
   , psMoveMissiles = 0
+  , psTypeCooldown = 0
   }
 
 isCurr :: PlayState -> Int -> Int -> Bool

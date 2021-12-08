@@ -24,7 +24,15 @@ view' s =
       vTile [ mkRow s row | row <- [1..dim] ]
 
 header :: PlayState -> String
-header s = printf " Missile Command! Missiles Destroyed: = %s " (show (Score.get (psScore s) X))
+header s = case ((psTypeCooldown s) == 0) of
+  True  -> printf " Missile Command! Missiles Destroyed: = %s ---- Defenses: Active "
+    (show (Score.get (psScore s) X)) 
+  False -> printf " Missile Command! Missiles Destroyed: = %s ---- Defenses:   -    "
+    (show (Score.get (psScore s) X)) 
+  
+          
+            
+            
 
 mkRow :: PlayState -> Int -> Widget n
 mkRow s row = hTile [ mkCell s row i | i <- [1..dim] ]
@@ -68,12 +76,12 @@ blockB, blockX, blockF :: Widget n
 -- blockB = vBox [fill ' ']
 -- blockX = vBox [fill 'X']
 -- blockO = vBox [fill 'O']
-blockB = vBox [str "  "]
-blockX = withX (vBox [str "  "])
-blockF = withF (vBox [str "  "])
+blockB = vBox [ str "  "]
+blockX = withX (vBox [str " "])
+blockF = withF (vBox [ str "  "])
 
 blockO :: Char -> Widget n
-blockO c = withO (vBox [str [' ', c, ' ']])
+blockO c = withO (vBox [str [c, c]])
 
 vTile :: [Widget n] -> Widget n
 vTile (b:bs) = vBox (b : [b | b <- bs])
