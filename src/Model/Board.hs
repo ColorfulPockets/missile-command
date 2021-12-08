@@ -53,7 +53,7 @@ checkMatch board c p = case M.lookup p board of
   Just _ -> False
 
 findCharPos :: Board -> Char -> [Pos] -- returns a list of positions for that letter
-findCharPos board c = [ p | p <- rTop, (checkMatch board c p)]
+findCharPos board c = [ p | p <- positions, (checkMatch board c p)]
 
 charArray :: [Char]
 charArray = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
