@@ -59,10 +59,10 @@ mkCell' s r c = (mkCellContents xoMb)
     --   | otherwise = Nothing
 
 mkCellContents :: Maybe CellContents -> Widget n
-mkCellContents Nothing  = blockB
 mkCellContents (Just X) = blockX
 mkCellContents (Just O) = blockO
 mkCellContents (Just (F _ _)) = blockF
+mkCellContents _  = blockB
 
 blockB, blockX, blockO, blockF :: Widget n
 -- blockB = vBox [fill ' ']

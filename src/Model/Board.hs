@@ -13,6 +13,7 @@ module Model.Board
   , init
   , put
   , remove
+  , notNone
   , positions
   , emptyPositions
   , boardWinner
@@ -47,6 +48,7 @@ data CellContents
   = X 
   | O
   | F {distance :: Int, dir :: Direct}
+  | None
   deriving (Eq, Show)
 
 data Direct
@@ -76,6 +78,11 @@ rTop = [Pos r 4 | r <- [1..dim]] --TODO
 
 emptyPositions :: Board -> [Pos]
 emptyPositions board  = [ p | p <- rTop, M.notMember p board] -- TODO
+
+notNone :: CellContents -> Bool
+notNone c = case c of
+      None  -> False
+      _     -> True
 
 --emptyPositions :: Board -> [Pos]
 --emptyPositions board  = [ p | p <- positions, M.notMember p board]
@@ -149,10 +156,10 @@ iterI b ((pos, contents):xs) = iterI b' xs
       _ -> b
 
 
-remove :: Board -> Pos -> (Board, Bool)
+remove :: Board -> Pos -> (Board, CellContents)
 remove board pos = case M.lookup pos board of 
-  Nothing -> (board, False)
-  Just _  -> ((M.delete pos board), True)
+  Nothing -> (board, None)
+  Just c  -> ((M.delete pos board), c)
 
 result :: Board -> Result Board
 result b 

@@ -35,11 +35,12 @@ move f s = s { psPos = f (psPos s) }
 shoot :: PlayState -> IO (Board)
 -------------------------------------------------------------------------------
 --shoot s = return (result (if changed then (updateScoreAndShoot s target) else ms))
-shoot s = return (if changed then ((shootSurrounding s target)) else (ms))
+shoot s = return (if changed then ((shootSurrounding (psBoard s) target)) else (ms))
   where
     target = psPos s
     b = psBoard s
-    (ms, changed) = remove b target
+    (ms, c) = remove b target
+    changed = notNone c
 
 --updateScoreAndShoot :: PlayState -> Pos -> Board
 --updateScoreAndShoot s target = b
@@ -51,15 +52,18 @@ shoot s = return (if changed then ((shootSurrounding s target)) else (ms))
     ---_ = Model.next s (Model.Board.UpdateScore b)
 
 
-shootSurrounding :: PlayState -> Pos -> Board
-shootSurrounding s (Pos i j) = explodeAround (Pos i j) b'''''
+shootSurrounding :: Board -> Pos -> Board
+shootSurrounding b p = explodeAround p b'''''2
   where
-    b = psBoard s
-    (b'   , _) = remove b    (Pos (i - 1) j) -- up
-    (b''  , _) = remove b'   (Pos (i + 1) j) -- down
-    (b''' , _) = remove b''  (Pos i (j - 1)) -- left
-    (b'''', _) = remove b''' (Pos i (j + 1)) -- right
-    (b''''', _) = remove b'''' (Pos i j)
+    (b',      _)       = remove b p
+    (b''    , c'')      = remove b'    (up p) -- up
+    b''2               = if c'' == O then shootSurrounding b'' (up p) else b''
+    (b'''   , c''')     = remove b''2   (down p) -- down
+    b'''2              = if c''' == O then shootSurrounding b''' (down p) else b'''
+    (b''''  , c'''')    = remove b'''2  (left p) -- left
+    b''''2             = if c'''' == O then shootSurrounding b'''' (left p) else b''''
+    (b''''' , c''''')   = remove b''''2 (right p) -- right
+    b'''''2            = if c''''' == O then shootSurrounding b''''' (right p) else b'''''
 
 -- Generates the initial explosion ring around a shot missile
 explodeAround :: Pos -> Board -> Board
@@ -85,7 +89,8 @@ moveEachExplosion fs b = case fs of
     Just (F i d) -> if i < 3 
       then moveEachExplosion ps (propogateInDirection p i d b' )
       else moveEachExplosion ps b'
-      where (b', _) = remove b p
+      where 
+        (b', _) = remove b p
     _       -> moveEachExplosion ps b
 
 {-
@@ -103,31 +108,20 @@ if it's above a certain amount
 propogateInDirection :: Pos -> Int -> Direct -> Board -> Board
 propogateInDirection p i d b = 
   case d of
-    DirUp     ->  b''''
-      where 
-        (b', _)     = remove b (up p)
-        (b'', _)    = remove b' (right p)
-        b'''        = put b'' (F (i+1) DirUp) (up p)
-        b''''       = put b''' (F (i+1) DirUp) (right p)
-    DirRight     ->  b''''
-      where 
-        (b', _)     = remove b (right p)
-        (b'', _)    = remove b' (down p)
-        b'''        = put b'' (F (i+1) DirRight) (right p)
-        b''''       = put b''' (F (i+1) DirRight) (down p)
-    DirDown     ->  b''''
-      where 
-        (b', _)     = remove b (down p)
-        (b'', _)    = remove b' (left p)
-        b'''        = put b'' (F (i+1) DirDown) (down p)
-        b''''       = put b''' (F (i+1) DirDown) (left p)
-    DirLeft     ->  b''''
-      where 
-        (b', _)     = remove b (left p)
-        (b'', _)    = remove b' (up p)
-        b'''        = put b'' (F (i+1) DirLeft) (left p)
-        b''''       = put b''' (F (i+1) DirLeft) (up p)
+    DirUp         ->  propogateQuadrant b p DirUp i up right
+    DirRight      ->  propogateQuadrant b p DirRight i right down
+    DirDown       ->  propogateQuadrant b p DirDown i down left
+    DirLeft       ->  propogateQuadrant b p DirLeft i left up
     
+propogateQuadrant :: Board -> Pos -> Direct -> Int -> (Pos -> Pos) -> (Pos -> Pos) -> Board
+propogateQuadrant b p dir i posDir1 posDir2 = b''''
+  where 
+    (b', c')     = remove b (posDir1 p)
+    b'2          = if c' == O then shootSurrounding b' (posDir1 p) else b'
+    (b'', c'')    = remove b'2 (posDir2 p)
+    b''2          = if c'' == O then shootSurrounding b'' (posDir2 p) else b''
+    b'''        = put b''2 (F (i+1) dir) (posDir1 p)
+    b''''       = put b''' (F (i+1) dir) (posDir2 p)
 
 -- Returns a list of Pos where the CellContents is F
 getFs :: [(Pos, CellContents)] -> [Pos]

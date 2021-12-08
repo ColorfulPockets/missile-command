@@ -30,7 +30,7 @@ init :: Int -> PlayState
 init n = PS 
   { psScore  = Score.init n
   , psBoard  = Board.init
-  , psPos    = head Board.positions 
+  , psPos    = head (reverse Board.positions) 
   , psResult = Board.Cont ()
   }
 
