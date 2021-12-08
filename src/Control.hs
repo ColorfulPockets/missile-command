@@ -3,6 +3,7 @@ module Control where
 import Brick hiding (Result)
 import qualified Graphics.Vty as V
 import qualified Brick.Types as T
+import qualified Data.Map as M 
 
 import Model
 import Model.Board
@@ -51,17 +52,90 @@ shoot s = return (if changed then ((shootSurrounding s target)) else (ms))
 
 
 shootSurrounding :: PlayState -> Pos -> Board
-shootSurrounding s (Pos i j) = b'''''
+shootSurrounding s (Pos i j) = explodeAround (Pos i j) b'''''
   where
     b = psBoard s
     (b'   , _) = remove b    (Pos (i - 1) j) -- up
     (b''  , _) = remove b'   (Pos (i + 1) j) -- down
     (b''' , _) = remove b''  (Pos i (j - 1)) -- left
     (b'''', _) = remove b''' (Pos i (j + 1)) -- right
-    (b''''', _) = remove b'''' (Pos i j) -- TODO: this needs to be cleaned up
+    (b''''', _) = remove b'''' (Pos i j)
 
---shoot s = return (result (remove (psBoard s) (psPos s))) -- TODO: blast radius
+-- Generates the initial explosion ring around a shot missile
+explodeAround :: Pos -> Board -> Board
+explodeAround p b = b'''''
+  where 
+    b' = put b (F 1 DirUp) (up p) -- up
+    b'' = put b'  (F 1 DirDown) (down p) -- down
+    b''' = put b'' (F 1 DirLeft) (left p) -- left
+    b'''' = put b''' (F 1 DirRight) (right p) -- right
+    b''''' = put b'''' (F 0 DirUp) p
 
+-- Finds all explosions on the board and propogates them outward
+moveExplosions :: Board -> Board
+moveExplosions b = moveEachExplosion fs b
+  where
+    fs = getFs (M.toList b)
+
+-- Helper function -- takes all explosion positions and propogates them outward if necessary
+moveEachExplosion :: [Pos] -> Board -> Board
+moveEachExplosion fs b = case fs of
+  []  -> b
+  (p : ps) -> case b ! p of
+    Just (F i d) -> if i < 3 
+      then moveEachExplosion ps (propogateInDirection p i d b' )
+      else moveEachExplosion ps b'
+      where (b', _) = remove b p
+    _       -> moveEachExplosion ps b
+
+{-
+Propogates a single explosion piece, increasing it's distance counter.
+
+Up: Propogates up and right
+Right: Propogates right and down
+Down: Propogates down and left
+Left: Propogates left and up
+
+Essentially, each type of F has its own quadrant so it won't collide with itself.
+The distance counter is used for explosion radius, see moveEachExplosion which checks
+if it's above a certain amount
+-}
+propogateInDirection :: Pos -> Int -> Direct -> Board -> Board
+propogateInDirection p i d b = 
+  case d of
+    DirUp     ->  b''''
+      where 
+        (b', _)     = remove b (up p)
+        (b'', _)    = remove b' (right p)
+        b'''        = put b'' (F (i+1) DirUp) (up p)
+        b''''       = put b''' (F (i+1) DirUp) (right p)
+    DirRight     ->  b''''
+      where 
+        (b', _)     = remove b (right p)
+        (b'', _)    = remove b' (down p)
+        b'''        = put b'' (F (i+1) DirRight) (right p)
+        b''''       = put b''' (F (i+1) DirRight) (down p)
+    DirDown     ->  b''''
+      where 
+        (b', _)     = remove b (down p)
+        (b'', _)    = remove b' (left p)
+        b'''        = put b'' (F (i+1) DirDown) (down p)
+        b''''       = put b''' (F (i+1) DirDown) (left p)
+    DirLeft     ->  b''''
+      where 
+        (b', _)     = remove b (left p)
+        (b'', _)    = remove b' (up p)
+        b'''        = put b'' (F (i+1) DirLeft) (left p)
+        b''''       = put b''' (F (i+1) DirLeft) (up p)
+    
+
+-- Returns a list of Pos where the CellContents is F
+getFs :: [(Pos, CellContents)] -> [Pos]
+getFs b = case b of
+  []  -> []
+  ((p, c) : t) -> case c of
+    (F _ _) -> p : (getFs t)
+    _       -> getFs t
 
 getPos :: PlayState -> IO ([Pos], [Pos])
 getPos s = do
@@ -73,8 +147,9 @@ getPos s = do
 -------------------------------------------------------------------------------
 progressBoard :: PlayState -> IO (Board)
 -------------------------------------------------------------------------------
-progressBoard s = 
-  putAndRemove2 (psBoard s) <$> getPos s -- this line moves all the misiles downward
+progressBoard s = do
+    b <- putAndRemove2 (psBoard s) <$> getPos s -- this line moves all the misiles downward
+    return (moveExplosions b)
   -- Add other lines here for anything in the board state that should change every tick (such as explosion animations)
 
 

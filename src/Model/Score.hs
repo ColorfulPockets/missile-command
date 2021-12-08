@@ -1,7 +1,7 @@
 {-# LANGUAGE RecordWildCards #-}
 module Model.Score where
 
-import Model.Board (Result (..), XO (..))
+import Model.Board (Result (..), CellContents (..))
 
 -------------------------------------------------------------------------------
 -- | Score --------------------------------------------------------------------
@@ -18,19 +18,19 @@ data Score = Score
 init :: Int -> Score
 init n = Score n 0 0 0
 
-add :: Score -> Maybe XO -> Score
+add :: Score -> Maybe CellContents -> Score
 add sc (Just X) = sc { scX = scX sc + 1 }
 add sc (Just O) = sc { scO = scO sc + 1 }
 add sc Nothing  = sc { scD = scD sc + 1 }
 
-get :: Score -> XO -> Int
+get :: Score -> CellContents -> Int
 get Score {..} X = scX 
 get Score {..} O = scO 
 
 currRound :: Score -> Int
 currRound Score {..} = scX + scO + scD + 1
 
-startPlayer :: Score -> XO
+startPlayer :: Score -> CellContents
 startPlayer sc 
   | even (currRound sc) = X
   | otherwise           = O

@@ -2,8 +2,9 @@
 module Model.Board 
   ( -- * Types
     Board
-  , XO (..)
+  , CellContents (..)
   , Pos (..)
+  , Direct (..)
   , Result (..)
 
     -- * Board API
@@ -40,11 +41,19 @@ import System.Random -- (Random(randomRIO))
 -- | Board --------------------------------------------------------------------
 -------------------------------------------------------------------------------
 
-type Board = M.Map Pos XO
+type Board = M.Map Pos CellContents
 
-data XO 
+data CellContents 
   = X 
   | O
+  | F {distance :: Int, dir :: Direct}
+  deriving (Eq, Show)
+
+data Direct
+  = DirUp
+  | DirDown
+  | DirLeft
+  | DirRight
   deriving (Eq, Show)
 
 data Pos = Pos 
@@ -53,7 +62,7 @@ data Pos = Pos
   }
   deriving (Eq, Ord)
 
-(!) :: Board -> Pos -> Maybe XO 
+(!) :: Board -> Pos -> Maybe CellContents 
 board ! pos = M.lookup pos board
 
 dim :: Int
@@ -99,18 +108,18 @@ init = M.empty
                  
 data Result a 
   = Draw 
-  | Win XO
+  | Win CellContents
   | Retry 
   | Cont a
   | UpdateScore a
   deriving (Eq, Functor, Show)
 
-put :: Board -> XO -> Pos -> Board
+put :: Board -> CellContents -> Pos -> Board
 put board xo pos = case M.lookup pos board of 
   Just _  -> board
   Nothing -> M.insert pos xo board
 
---putAndRemove :: Board -> XO -> (Pos, Pos) -> Result Board
+--putAndRemove :: Board -> CellContents -> (Pos, Pos) -> Result Board
 --putAndRemove board xo (pos, toRemove) = case M.lookup pos board of 
 --  Just _  -> Retry
 --  Nothing -> result (M.insert pos xo (fst (remove board toRemove)))
@@ -125,7 +134,9 @@ iterR :: Board -> [Pos] -> Board
 iterR b []       = b
 iterR b (pos:xs) = iterR b' xs
   where
-    b' = fst (remove b pos)
+    b' = case b ! pos of
+      Just O -> fst (remove b pos)
+      _      -> b
 
 
 iterI :: Board -> [Pos] -> Board
@@ -147,10 +158,10 @@ result b
   | wins b O  = Win  O
   | otherwise = Cont b
 
-wins :: Board -> XO -> Bool
+wins :: Board -> CellContents -> Bool
 wins b xo = or [ winsPoss b xo ps | ps <- winPositions ]
 
-winsPoss :: Board -> XO -> [Pos] -> Bool
+winsPoss :: Board -> CellContents -> [Pos] -> Bool
 winsPoss b xo ps = and [ b!p == Just xo | p <- ps ]
 
 winPositions :: [[Pos]]
@@ -188,7 +199,7 @@ right p = p
   { pCol = min dim (pCol p + 1) 
   } 
 
-boardWinner :: Result a -> Maybe XO
+boardWinner :: Result a -> Maybe CellContents
 boardWinner (Win xo) = Just xo
 boardWinner _        = Nothing
 

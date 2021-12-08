@@ -45,9 +45,12 @@ withX = modifyDefAttr (`withBackColor` red)
 withO :: Widget n -> Widget n
 withO = modifyDefAttr (`withBackColor` blue)
 
+withF :: Widget n -> Widget n
+withF = modifyDefAttr (`withBackColor` yellow)
+
 mkCell' :: PlayState -> Int -> Int -> Widget n
 -- mkCell' _ r c = center (str (printf "(%d, %d)" r c))
-mkCell' s r c = (mkXO xoMb)
+mkCell' s r c = (mkCellContents xoMb)
   where 
     xoMb      = psBoard s ! Pos r c
     -- xoMb 
@@ -55,18 +58,20 @@ mkCell' s r c = (mkXO xoMb)
     --   | r > c     = Just O 
     --   | otherwise = Nothing
 
-mkXO :: Maybe XO -> Widget n
-mkXO Nothing  = blockB
-mkXO (Just X) = blockX
-mkXO (Just O) = blockO
+mkCellContents :: Maybe CellContents -> Widget n
+mkCellContents Nothing  = blockB
+mkCellContents (Just X) = blockX
+mkCellContents (Just O) = blockO
+mkCellContents (Just (F _ _)) = blockF
 
-blockB, blockX, blockO :: Widget n
+blockB, blockX, blockO, blockF :: Widget n
 -- blockB = vBox [fill ' ']
 -- blockX = vBox [fill 'X']
 -- blockO = vBox [fill 'O']
 blockB = vBox [str "  "]
 blockX = withX (vBox [str "  "])
 blockO = withO (vBox [str "  "])
+blockF = withF (vBox [str "  "])
 
 vTile :: [Widget n] -> Widget n
 vTile (b:bs) = vBox (b : [b | b <- bs])
