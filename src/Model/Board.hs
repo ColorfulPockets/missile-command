@@ -231,9 +231,9 @@ boardWinner _        = Nothing
 -- STUFF PREVIOUSLY IN PLAYER -- 
 --------------------------------
 
-travel :: Board -> IO ([(Pos, CellContents)], [(Pos, CellContents)])
-travel b = do
-  posL <- trailHelper thingsWithCells b
+travel :: Board -> Int -> IO ([(Pos, CellContents)], [(Pos, CellContents)])
+travel b n = do
+  posL <- trailHelper thingsWithCells b n
   trail_deleted <- (delTrailIter posL)
   trailConvert trail_deleted
   where
@@ -272,15 +272,15 @@ delTrailIter (e@((Pos i j), c):xs) = do
 
 
 -- @Bhavani: Generate new missile here by replacing the O
-trailHelper :: [(Pos, CellContents)] -> Board -> IO [(Pos, CellContents)]
-trailHelper [] b = do
+trailHelper :: [(Pos, CellContents)] -> Board -> Int -> IO [(Pos, CellContents)]
+trailHelper [] b _ = do
                       c <- randomRIO ('a', 'z') :: IO Char
                       return [((Pos 1 y), (O c))]
   where
     (Pos _ y) = botThing b !! 0
 
-trailHelper xs b = do
-  i <- randomRIO (0, 50) :: IO Int
+trailHelper xs b n = do
+  i <- randomRIO (0, n) :: IO Int
   if i == 0 then
     do
       (Pos _ y) <- fetcher b
