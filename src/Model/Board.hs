@@ -87,14 +87,11 @@ board ! pos = M.lookup pos board
 dim :: Int
 dim = 50
 
-spawnRate :: Int
-spawnRate = 10
-
 explosionRadius :: Int
-explosionRadius = 5
+explosionRadius = 10
 
 initialTimer :: Int
-initialTimer = 8
+initialTimer = 10
 
 positions :: [Pos]
 positions = [ Pos r c | r <- [1..dim], c <- [1..dim] ] 

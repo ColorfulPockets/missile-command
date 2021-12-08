@@ -3,7 +3,7 @@ module Control where
 import Brick hiding (Result)
 import qualified Graphics.Vty as V
 import qualified Brick.Types as T
-import qualified Data.Map as M 
+-- import qualified Data.Map as M 
 
 import Model
 import Model.Board
@@ -74,9 +74,11 @@ getPos s = do
 -------------------------------------------------------------------------------
 progressBoard :: PlayState -> IO (Board)
 -------------------------------------------------------------------------------
-progressBoard s = do
-    b <- putAndRemove2 (psBoard s) <$> getPos s -- this line moves all the misiles downward
-    return (moveExplosions b)
+progressBoard s = case psMoveMissiles s of
+    0 -> do
+      b <- putAndRemove2 (psBoard s) <$> getPos s-- this line moves all the misiles downward
+      return (moveExplosions b)
+    _ -> return (moveExplosions (psBoard s))
   -- Add other lines here for anything in the board state that should change every tick (such as explosion animations)
 
 
@@ -85,7 +87,11 @@ progressBoard s = do
 nextS :: PlayState -> Board -> EventM n (Next PlayState)
 -------------------------------------------------------------------------------
 nextS s b = case next s (result b) of
-  Right s' -> continue s'
+  Right s' -> case missileCounter of
+    1 -> continue s' {psMoveMissiles = 0}
+    _ -> continue s' {psMoveMissiles = missileCounter + 1}
+    where
+      missileCounter = psMoveMissiles s' 
   Left res -> halt (s) 
 
 

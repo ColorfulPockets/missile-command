@@ -25,6 +25,7 @@ data PlayState = PS
   , psPos    :: Board.Pos       -- ^ current cursor
   , psResult :: Board.Result () -- ^ result
   , prog     :: Int     
+  , psMoveMissiles :: Int
   } 
 
 init :: Int -> PlayState
@@ -34,6 +35,7 @@ init n = PS
   , psPos    = head (reverse Board.positions) 
   , psResult = Board.Cont ()
   , prog     = 100
+  , psMoveMissiles = 0
   }
 
 isCurr :: PlayState -> Int -> Int -> Bool
