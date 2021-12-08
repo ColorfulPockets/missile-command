@@ -55,9 +55,6 @@ checkMatch board c p = case M.lookup p board of
 findCharPos :: Board -> Char -> [Pos] -- returns a list of positions for that letter
 findCharPos board c = [ p | p <- positions, (checkMatch board c p)]
 
-charArray :: [Char]
-charArray = ['a'..'z']
-
 data CellContents 
   = X 
   | O { letter :: Char }
@@ -277,8 +274,8 @@ delTrailIter (e@((Pos i j), c):xs) = do
 -- @Bhavani: Generate new missile here by replacing the O
 trailHelper :: [(Pos, CellContents)] -> Board -> IO [(Pos, CellContents)]
 trailHelper [] b = do
-                      i <- randomRIO (0,25)
-                      return [((Pos 1 y), (O (charArray !! i)))]
+                      c <- randomRIO ('a', 'z') :: IO Char
+                      return [((Pos 1 y), (O c))]
   where
     (Pos _ y) = botThing b !! 0
 
@@ -287,8 +284,8 @@ trailHelper xs b = do
   if i == 0 then
     do
       (Pos _ y) <- fetcher b
-      i <- randomRIO (0,25)
-      return (if y == 0 then xs else ((Pos 1 y), (O (charArray !! i))) : xs)
+      c <- randomRIO ('a', 'z') :: IO Char
+      return (if y == 0 then xs else ((Pos 1 y), (O c)) : xs)
   else
     return xs
 --  where
