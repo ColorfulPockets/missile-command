@@ -92,7 +92,7 @@ explodeAround p b = b'''''
     b'' = put b'  (F 1 DirDown) (down p) -- down
     b''' = put b'' (F 1 DirLeft) (left p) -- left
     b'''' = put b''' (F 1 DirRight) (right p) -- right
-    b''''' = put b'''' (F 0 DirUp) p
+    b''''' = put b'''' (F 3 DirUp) p
 
 -- Finds all explosions on the board and propogates them outward
 moveExplosions :: Board -> Board
