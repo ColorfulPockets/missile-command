@@ -31,7 +31,7 @@ mkRow s row = hTile [ mkCell s row i | i <- [1..dim] ]
 
 mkCell :: PlayState -> Int -> Int -> Widget n
 mkCell s r c 
-  | isCurr s r c = withCursor raw 
+  | isCurr s r c = raw --withCursor raw 
   | otherwise    = raw 
   where
     raw = mkCell' s r c
@@ -60,18 +60,20 @@ mkCell' s r c = (mkCellContents xoMb)
 
 mkCellContents :: Maybe CellContents -> Widget n
 mkCellContents (Just X) = blockX
-mkCellContents (Just O) = blockO
+mkCellContents (Just (O c)) = blockO c
 mkCellContents (Just (F _ _)) = blockF
 mkCellContents _  = blockB
 
-blockB, blockX, blockO, blockF :: Widget n
+blockB, blockX, blockF :: Widget n
 -- blockB = vBox [fill ' ']
 -- blockX = vBox [fill 'X']
 -- blockO = vBox [fill 'O']
 blockB = vBox [str "  "]
 blockX = withX (vBox [str "  "])
-blockO = withO (vBox [str "  "])
 blockF = withF (vBox [str "  "])
+
+blockO :: Char -> Widget n
+blockO c = withO (vBox [str [' ', c, ' ']])
 
 vTile :: [Widget n] -> Widget n
 vTile (b:bs) = vBox (b : [b | b <- bs])

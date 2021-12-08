@@ -12,18 +12,20 @@ import Control.Monad.IO.Class (MonadIO(liftIO))
 -- import Model.Player
 -- import Model.Player 
 
+import Data.Char
 -------------------------------------------------------------------------------
 
 control :: PlayState -> BrickEvent n Tick -> EventM n (Next PlayState)
 control s ev = case ev of 
   AppEvent Tick                   -> nextS s =<< liftIO (progressBoard s)
   T.VtyEvent (V.EvKey V.KEnter _) -> nextS s =<< liftIO (progressBoard s)    
-  T.VtyEvent (V.EvKey (V.KChar ' ') _) -> nextS s =<< liftIO (shoot s)              -- when space bar is clicked, a missile is shot
+--  T.VtyEvent (V.EvKey (V.KChar ' ') _) -> nextS s =<< liftIO (shoot s)              -- when space bar is clicked, a missile is shot
   T.VtyEvent (V.EvKey V.KUp   _)  -> nextS (move up s) =<< liftIO (progressBoard (s))
   T.VtyEvent (V.EvKey V.KDown _)  -> nextS (move down s) =<< liftIO (progressBoard (s))
   T.VtyEvent (V.EvKey V.KLeft _)  -> nextS (move left s) =<< liftIO (progressBoard (s))
   T.VtyEvent (V.EvKey V.KRight _) -> nextS (move right s) =<< liftIO (progressBoard (s))
   T.VtyEvent (V.EvKey V.KEsc _)   -> Brick.halt s
+  T.VtyEvent (V.EvKey (V.KChar c) _) -> nextS s =<< liftIO (shootChar s (toLower c))              -- when a certain letter is clicked, that missile is shot
   _                               -> Brick.continue s -- Brick.halt s
 
 -------------------------------------------------------------------------------
@@ -32,12 +34,21 @@ move :: (Pos -> Pos) -> PlayState -> PlayState
 move f s = s { psPos = f (psPos s) }
 
 -------------------------------------------------------------------------------
-shoot :: PlayState -> IO (Board)
+shootChar :: PlayState -> Char -> IO (Board)
+-------------------------------------------------------------------------------
+shootChar s c = shoot s target
+  where
+    posList = (Model.Board.findCharPos (psBoard s) c) -- gets the position mapped to that character
+    target = case posList of 
+                    [] -> psPos s     -- TODO: decide what should happen when the letter they typed is not associated with any missile
+                    (x:_) -> x
+
+-------------------------------------------------------------------------------
+shoot :: PlayState -> Pos -> IO (Board)
 -------------------------------------------------------------------------------
 --shoot s = return (result (if changed then (updateScoreAndShoot s target) else ms))
-shoot s = return (if changed then ((shootSurrounding (psBoard s) target)) else (ms))
+shoot s target = return (if changed then ((shootSurrounding (psBoard s) target)) else (ms))
   where
-    target = psPos s
     b = psBoard s
     (ms, c) = remove b target
     changed = notNone c
@@ -57,13 +68,21 @@ shootSurrounding b p = explodeAround p b'''''2
   where
     (b',      _)       = remove b p
     (b''    , c'')      = remove b'    (up p) -- up
-    b''2               = if c'' == O then shootSurrounding b'' (up p) else b''
+    b''2               = case c'' of 
+      (O _)   ->  shootSurrounding b'' (up p) 
+      _       -> b''
     (b'''   , c''')     = remove b''2   (down p) -- down
-    b'''2              = if c''' == O then shootSurrounding b''' (down p) else b'''
+    b'''2              = case c''' of
+      (O _)   -> shootSurrounding b''' (down p)
+      _       ->  b'''
     (b''''  , c'''')    = remove b'''2  (left p) -- left
-    b''''2             = if c'''' == O then shootSurrounding b'''' (left p) else b''''
+    b''''2             = case c'''' of
+      (O _)   ->  shootSurrounding b'''' (left p) 
+      _       ->  b''''
     (b''''' , c''''')   = remove b''''2 (right p) -- right
-    b'''''2            = if c''''' == O then shootSurrounding b''''' (right p) else b'''''
+    b'''''2            = case c''''' of
+      (O _)   -> shootSurrounding b''''' (right p) 
+      _       -> b'''''
 
 -- Generates the initial explosion ring around a shot missile
 explodeAround :: Pos -> Board -> Board
@@ -117,9 +136,13 @@ propogateQuadrant :: Board -> Pos -> Direct -> Int -> (Pos -> Pos) -> (Pos -> Po
 propogateQuadrant b p dir i posDir1 posDir2 = b''''
   where 
     (b', c')     = remove b (posDir1 p)
-    b'2          = if c' == O then shootSurrounding b' (posDir1 p) else b'
+    b'2          = case c' of 
+      (O _) -> shootSurrounding b' (posDir1 p) 
+      _     -> b'
     (b'', c'')    = remove b'2 (posDir2 p)
-    b''2          = if c'' == O then shootSurrounding b'' (posDir2 p) else b''
+    b''2          = case c'' of 
+      (O _) -> shootSurrounding b'' (posDir2 p) 
+      _     -> b''
     b'''        = put b''2 (F (i+1) dir) (posDir1 p)
     b''''       = put b''' (F (i+1) dir) (posDir2 p)
 
