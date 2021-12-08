@@ -29,9 +29,9 @@ control s ev = case ev of
   _                               -> Brick.continue s -- Brick.halt s
 
 -------------------------------------------------------------------------------
-move :: (Pos -> Pos) -> PlayState -> PlayState
+--move :: (Pos -> Pos) -> PlayState -> PlayState
 -------------------------------------------------------------------------------
-move f s = s { psPos = f (psPos s) }
+--move f s = s { psPos = f (psPos s) }
 
 -------------------------------------------------------------------------------
 shootChar :: PlayState -> Char -> IO (Board)
@@ -64,8 +64,10 @@ shoot s target = return (if changed then ((shootSurrounding (psBoard s) target))
 
 getPos :: PlayState -> IO ([(Pos, CellContents)], [(Pos, CellContents)])
 getPos s = do
-  (p, del) <- travel (psBoard s)
+  (p, del) <- travel (psBoard s) n
   return (p, del)
+    where
+      n = prog s -- TODO FIX PROGRESSION
 
 -- This function controls how things on the board change.
 -- If you want to change the board, start here.

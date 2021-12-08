@@ -61,9 +61,6 @@ checkMatch board c p = case M.lookup p board of
 findCharPos :: Board -> Char -> [Pos] -- returns a list of positions for that letter
 findCharPos board c = [ p | p <- positions, (checkMatch board c p)]
 
-charArray :: [Char]
-charArray = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
-
 data CellContents 
   = X 
   | O { letter :: Char }
@@ -258,9 +255,9 @@ boardWinner _        = Nothing
 -- STUFF PREVIOUSLY IN PLAYER -- 
 --------------------------------
 
-travel :: Board -> IO ([(Pos, CellContents)], [(Pos, CellContents)])
-travel b = do
-  posL <- trailHelper thingsWithCells b
+travel :: Board -> Int -> IO ([(Pos, CellContents)], [(Pos, CellContents)])
+travel b n = do
+  posL <- trailHelper thingsWithCells b n
   trail_deleted <- (delTrailIter posL)
   trailConvert trail_deleted
   where
@@ -299,20 +296,20 @@ delTrailIter (e@((Pos i j), c):xs) = do
 
 
 -- @Bhavani: Generate new missile here by replacing the O
-trailHelper :: [(Pos, CellContents)] -> Board -> IO [(Pos, CellContents)]
--- trailHelper [] b = do
---                       i <- randomRIO (0,25)
---                       return [((Pos 1 y), (O (charArray !! i)))]
---   where
---     (Pos _ y) = botThing b !! 0
+trailHelper :: [(Pos, CellContents)] -> Board -> Int -> IO [(Pos, CellContents)]
+trailHelper [] b _ = do
+                      c <- randomRIO ('a', 'z') :: IO Char
+                      return [((Pos 1 y), (O c))]
+  where
+    (Pos _ y) = botThing b !! 0
 
-trailHelper xs b = do
-  i <- randomRIO (0, spawnRate) :: IO Int
+trailHelper xs b n = do
+  i <- randomRIO (0, n) :: IO Int
   if i == 0 then
     do
       (Pos _ y) <- fetcher b
-      i <- randomRIO (0,25)
-      return (if y == 0 then xs else ((Pos 1 y), (O (charArray !! i))) : xs)
+      c <- randomRIO ('a', 'z') :: IO Char
+      return (if y == 0 then xs else ((Pos 1 y), (O c)) : xs)
   else
     return xs
 --  where
