@@ -292,7 +292,7 @@ delTrailIter (e@((Pos i j), c):xs) = do
   return ((((Pos (i + 1) (j + (leftRightTravelAmounts !! index))), c), e) : newXs)
 
 
--- @Bhavani: Generate new missile here by replacing the O
+-- Spawns new missiles
 trailHelper :: [(Pos, CellContents)] -> Board -> Int -> IO [(Pos, CellContents)]
 trailHelper [] b _ = do
                       c <- randomRIO ('A', 'Z') :: IO Char
