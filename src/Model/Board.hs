@@ -141,8 +141,8 @@ init = M.empty
 -------------------------------------------------------------------------------
                  
 data Result a 
-  = Draw 
-  | Win CellContents
+  = Win CellContents
+  | Lose
   | Retry 
   | Cont a
   | UpdateScore a
@@ -195,8 +195,7 @@ remove board pos = case M.lookup pos board of
 
 result :: Board -> Result Board
 result b 
-  | isFull b  = Draw
-  | wins b X  = Win  X 
+  | bottomRowHasMissile b = Lose
 --  | wins b O  = Win  O
   | otherwise = Cont b
 
@@ -214,8 +213,19 @@ rows  = [[Pos r c | c <- [1..dim]] | r <- [1..dim]]
 cols  = [[Pos r c | r <- [1..dim]] | c <- [1..dim]]
 diags = [[Pos i i | i <- [1..dim]], [Pos i (dim+1-i) | i <- [1..dim]]]
 
+bottomRow :: [Pos]
+bottomRow = [Pos dim c | c <- [1..dim]]
+
+isMissile :: Maybe CellContents -> Bool
+isMissile c = case c of
+  Just (O _) -> True
+  _   -> False
+
 isFull :: Board -> Bool
 isFull b = M.size b == dim * dim
+
+bottomRowHasMissile :: Board -> Bool
+bottomRowHasMissile b = elem True (fmap isMissile (fmap (b !) bottomRow))
 
 -------------------------------------------------------------------------------
 -- | Moves 

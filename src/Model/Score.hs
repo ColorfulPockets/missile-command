@@ -39,7 +39,6 @@ winner :: Score -> Result ()
 winner sc@Score {..}
   | scX > scO + left = Win X
   | scO > scX + left = Win (O ' ')
-  | left == 0        = Draw
   | otherwise        = Cont ()
   where 
     left             = 1 + scMax - currRound sc

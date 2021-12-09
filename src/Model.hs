@@ -51,6 +51,6 @@ next s (Board.Cont b') = Right (s { psBoard = b', prog = (max 5 ((prog s) - 1))
                                   })
 next s (Board.UpdateScore b') = Right (s { psBoard = b'
                                   , psScore = (Score.add (psScore s) (Just Board.X)) })
-next s res             = Right s
+next s res             = Left Board.Lose
 
 
