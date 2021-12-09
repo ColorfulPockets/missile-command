@@ -13,16 +13,15 @@ module Model.Score (
 type Score = Int 
 
 -- Initializes a score
--- implicitly tested -- Bhavani
 init :: Int -> Score
 init n = n
 
--- tested -- Bhavani
+-- tested
 -- Adds one point to score
 add :: Score -> Score
 add sc = sc + 1
 
--- tested -- Bhavani
+-- tested
 -- Adds a variable amount to score
 addVar :: Score -> Int -> Score
 addVar sc i = sc + i

@@ -12,9 +12,10 @@ import Graphics.Vty hiding (dim)
 -------------------------------------------------------------------------------
 view :: PlayState -> [Widget String]
 -------------------------------------------------------------------------------
+-- tested -- Andrew
 view s = [view' s]
 
--- tested -- Andrew
+
 view' :: PlayState -> Widget String
 view' s = 
   withBorderStyle unicode $
