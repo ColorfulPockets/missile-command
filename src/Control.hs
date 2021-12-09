@@ -36,17 +36,24 @@ cooldownLength = 15
 --move f s = s { psPos = f (psPos s) }
 
 -------------------------------------------------------------------------------
-shootChar :: PlayState -> Char -> IO (Board)
+shootChar :: PlayState -> Char -> IO Board
 -------------------------------------------------------------------------------
-shootChar s c = shoot s target
+shootChar s c = iterShoot s (psBoard s) posList --shoot s target
   where
-    posList = (Model.Board.findCharPos (psBoard s) c) -- gets the position mapped to that character
-    target = case posList of 
-                    [] -> psPos s     -- TODO: decide what should happen when the letter they typed is not associated with any missile
-                    (x:_) -> x
+    posList = Model.Board.findCharPos (psBoard s) c -- gets the position mapped to that character
+    targets = case posList of 
+                    [] -> [psPos s]     -- TODO: decide what should happen when the letter they typed is not associated with any missile
+                    xs -> xs
+
+
+iterShoot :: PlayState -> Board -> [Pos] -> IO Board
+iterShoot s b []     = return b
+iterShoot s b (x:xs) = do
+  b' <- shoot s x
+  iterShoot (s {psBoard = b'}) b' xs
 
 -------------------------------------------------------------------------------
-shoot :: PlayState -> Pos -> IO (Board)
+shoot :: PlayState -> Pos -> IO Board
 -------------------------------------------------------------------------------
 --shoot s = return (result (if changed then (updateScoreAndShoot s target) else ms))
 shoot s target = return (if changed then ((shootSurrounding (psBoard s) target)) else (ms))
@@ -74,7 +81,7 @@ getPos s = do
 -- This function controls how things on the board change.
 -- If you want to change the board, start here.
 -------------------------------------------------------------------------------
-progressBoard :: PlayState -> IO (Board)
+progressBoard :: PlayState -> IO Board
 -------------------------------------------------------------------------------
 progressBoard s = case psMoveMissiles s of
     0 -> do
