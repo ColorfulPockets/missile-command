@@ -33,17 +33,29 @@ cooldownLength :: Int
 cooldownLength = 15
 
 -------------------------------------------------------------------------------
-shootChar :: PlayState -> Char -> IO (Board)
+--move :: (Pos -> Pos) -> PlayState -> PlayState
 -------------------------------------------------------------------------------
-shootChar s c = shoot s target
-  where
-    posList = (Model.Board.findCharPos (psBoard s) c)
-    target = case posList of 
-                    [] -> psPos s
-                    (x:_) -> x
+--move f s = s { psPos = f (psPos s) }
 
 -------------------------------------------------------------------------------
-shoot :: PlayState -> Pos -> IO (Board)
+shootChar :: PlayState -> Char -> IO Board
+-------------------------------------------------------------------------------
+shootChar s c = iterShoot s (psBoard s) posList --shoot s target
+  where
+    posList = Model.Board.findCharPos (psBoard s) c -- gets the position mapped to that character
+    --targets = case posList of 
+    --                [] -> [psPos s]     -- TODO: decide what should happen when the letter they typed is not associated with any missile
+    --                xs -> xs
+
+
+iterShoot :: PlayState -> Board -> [Pos] -> IO Board
+iterShoot _ b []     = return b
+iterShoot s _ (x:xs) = do
+  b' <- shoot s x
+  iterShoot (s {psBoard = b'}) b' xs
+
+-------------------------------------------------------------------------------
+shoot :: PlayState -> Pos -> IO Board
 -------------------------------------------------------------------------------
 shoot s target = return (if changed then (newBoard) else (ms))
   where
@@ -62,7 +74,7 @@ getPos s = do
 -- This function controls how things on the board change.
 -- If you want to change the board, start here.
 -------------------------------------------------------------------------------
-progressBoard :: PlayState -> IO (Board)
+progressBoard :: PlayState -> IO Board
 -------------------------------------------------------------------------------
 progressBoard s = case psMoveMissiles s of
     0 -> do
