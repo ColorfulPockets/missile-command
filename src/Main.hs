@@ -21,7 +21,6 @@ main = do
   let buildVty = V.mkVty V.defaultConfig
   initialVty <- buildVty
   _ <- customMain initialVty buildVty (Just chan) app (Model.init)
-  -- print (psResult res, psScore res) 
   return ()
 
 app :: App PlayState Tick String

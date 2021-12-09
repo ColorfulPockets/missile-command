@@ -26,8 +26,8 @@ data PlayState = PS
   , psResult :: Board.Result () -- ^ result
   , prog     :: Int     
   , psMoveMissiles :: Int       -- Loops between 0 and ; missiles only move when it's 0
-  , psTypeCooldown :: Int         -- Counts down the typing cooldown
-  , psMissileCount :: Int
+  , psTypeCooldown :: Int       -- Counts down the typing cooldown
+  , psMissileCount :: Int       -- Keeps track of number of missiles currently on the board
   } 
 
 init :: PlayState
@@ -53,7 +53,6 @@ next s (Board.Cont b') = Right (s { psBoard = b', prog = (max 5 ((prog s) - 1))
                                   })
 next s (Board.UpdateScore b') = Right (s { psBoard = b'
                                   , psScore = (Score.add (psScore s)) })
--- next s res             = Left Board.Lose
 next _ _              = Left Board.Lose
 
 
