@@ -30,9 +30,9 @@ data PlayState = PS
   , psMissileCount :: Int
   } 
 
-init :: Int -> PlayState
-init n = PS 
-  { psScore  = Score.init n
+init :: PlayState
+init = PS 
+  { psScore  = Score.init 0
   , psBoard  = Board.init
   , psPos    = head (reverse Board.positions) 
   , psResult = Board.Cont ()
@@ -52,8 +52,8 @@ next s Board.Retry     = Right s
 next s (Board.Cont b') = Right (s { psBoard = b', prog = (max 5 ((prog s) - 1))
                                   })
 next s (Board.UpdateScore b') = Right (s { psBoard = b'
-                                  , psScore = (Score.add (psScore s) (Just Board.X)) })
+                                  , psScore = (Score.add (psScore s)) })
 -- next s res             = Left Board.Lose
-next s res              = Left Board.Lose
+next _ _              = Left Board.Lose
 
 

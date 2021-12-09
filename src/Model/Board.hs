@@ -90,7 +90,7 @@ data Pos = Pos
 board ! pos = M.lookup pos board
 
 dim :: Int
-dim = 50
+dim = 49
 
 explosionRadius :: Int
 explosionRadius = 10
@@ -481,6 +481,34 @@ mkLetter s@(char : chars) r c = if char == '*'
         else r
 mkLetter _ _ _  = []
 
+-- generates pixel art based on the string, offset by int inputs.
+mkNumber :: String -> Int -> Int -> [Pos]
+mkNumber s@(char : chars) r c = if char == '*' 
+  then (Pos r c) : (mkNumber chars newr newc)
+  else  mkNumber chars newr newc
+    where
+      newc = 
+        if ((length s) == 1) 
+          || ((length s) == 4)  
+          || ((length s) == 7) 
+          || ((length s) == 10) 
+          || ((length s) == 13)
+          || ((length s) == 16)
+          || ((length s) == 19)
+        then c - 2
+        else c + 1
+      newr = 
+        if ((length s) == 1) 
+          || ((length s) == 4)  
+          || ((length s) == 7) 
+          || ((length s) == 10) 
+          || ((length s) == 13)
+          || ((length s) == 16)
+          || ((length s) == 19)
+        then r + 1
+        else r
+mkNumber _ _ _  = []
+
 endScreen :: [Pos]
 endScreen = 
   (mkLetter g i j)
@@ -519,7 +547,44 @@ gameOverHelper b [] = b
 gameOverHelper b (p:ps) = gameOverHelper (put b X p) ps
 
 addScoreTo :: Board -> Int -> Board
-addScoreTo b _ = b
+addScoreTo b sc = gameOverHelper b (scoreLetters score)
+  where 
+    score = show sc
+
+scoreLetters :: String -> [Pos]
+scoreLetters s =  mkNumbers s 0 (length s)
+
+mkNumbers :: String -> Int -> Int -> [Pos]
+mkNumbers (char : chars) position count = 
+  let
+    str1 = " * **  *  *  *  * ***"
+    str2 = "***  *  *****  *  ***"
+    str3 = "***  *  * **  *  ****"
+    str4 = "* ** ** ****  *  *  *"
+    str5 = "****  *  ***  *  ****"
+    str6 = "****  *  **** ** ****"
+    str7 = "***  *  *  *  *  *  *"
+    str8 = "**** ** ***** ** ****"
+    str9 = "**** ** ****  *  *  *"
+    str0 = "**** ** ** ** ** ****"
+    row = 38
+    col = 25 - 2*(count)
+    offset = 4
+  in
+    case char of 
+    '1' -> (mkNumber str1 row (col + position*offset)) ++ (mkNumbers chars (position + 1) count)
+    '2' -> (mkNumber str2 row (col + position*offset)) ++ (mkNumbers chars (position + 1) count)
+    '3' -> (mkNumber str3 row (col + position*offset)) ++ (mkNumbers chars (position + 1) count)
+    '4' -> (mkNumber str4 row (col + position*offset)) ++ (mkNumbers chars (position + 1) count)
+    '5' -> (mkNumber str5 row (col + position*offset)) ++ (mkNumbers chars (position + 1) count)
+    '6' -> (mkNumber str6 row (col + position*offset)) ++ (mkNumbers chars (position + 1) count)
+    '7' -> (mkNumber str7 row (col + position*offset)) ++ (mkNumbers chars (position + 1) count)
+    '8' -> (mkNumber str8 row (col + position*offset)) ++ (mkNumbers chars (position + 1) count)
+    '9' -> (mkNumber str9 row (col + position*offset)) ++ (mkNumbers chars (position + 1) count)
+    '0' -> (mkNumber str0 row (col + position*offset)) ++ (mkNumbers chars (position + 1) count)
+    _   -> mkNumbers chars (position + 1) count
+
+mkNumbers [] _ _ = []
 
 isMissileBoard :: Board -> Pos -> Bool  -- check if the content is a missile
 isMissileBoard board p = isMissile (M.lookup p board)

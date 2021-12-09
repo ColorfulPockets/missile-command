@@ -1,13 +1,13 @@
 module View (view) where
 
 import Brick 
-import Brick.Widgets.Center (center)
-import Brick.Widgets.Border (borderWithLabel, hBorder, vBorder, border)
+-- import Brick.Widgets.Center (center)
+import Brick.Widgets.Border (borderWithLabel)
 import Brick.Widgets.Border.Style (unicode)
 import Text.Printf (printf)
 
 import Model
-import qualified Model.Score  as Score
+-- import qualified Model.Score  as Score
 import Model.Board
 import Graphics.Vty hiding (dim)
 
@@ -23,7 +23,7 @@ view' s =
       vTile [ mkRow s row | row <- [1..dim] ]
         where 
           header = printf " Missile Command! Missiles Destroyed: = %s ---- Defenses: "
-            (show (Score.get (psScore s) X)) 
+            (show (psScore s)) 
           status = case ((psTypeCooldown s) == 0) of
             True  -> (blackForeground (greenBackground (str " Active "))) <+> (str "  ")
             False -> (blackForeground (withX (str "   --   "))) <+> (str "  ")
@@ -41,8 +41,8 @@ mkCell s r c
 withX :: Widget n -> Widget n
 withX = modifyDefAttr (`withBackColor` red)
 
-withO :: Widget n -> Widget n
-withO = modifyDefAttr (`withBackColor` blue)
+-- withO :: Widget n -> Widget n
+-- withO = modifyDefAttr (`withBackColor` blue)
 
 withF :: Widget n -> Widget n
 withF = modifyDefAttr (`withBackColor` yellow)

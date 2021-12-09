@@ -15,7 +15,9 @@ import Data.Char
 control :: PlayState -> BrickEvent n Tick -> EventM n (Next PlayState)
 control s ev = case ev of 
   AppEvent Tick                   -> nextS s =<< liftIO (progressBoard s)
-  -- T.VtyEvent (V.EvKey V.KEnter _) -> nextS s =<< liftIO (progressBoard s)    
+  T.VtyEvent (V.EvKey V.KEnter _) -> case result (psBoard s) of
+    Lose -> nextS Model.init Model.Board.init   
+    _    -> Brick.continue s
   T.VtyEvent (V.EvKey V.KEsc _)   -> Brick.halt s
   T.VtyEvent (V.EvKey (V.KChar c) _) -> case psTypeCooldown s of
     0 -> nextS (s {psTypeCooldown = cooldownLength}) =<< liftIO (shootChar s (toUpper c))    -- when a certain letter is clicked, that missile is shot
@@ -83,10 +85,10 @@ nextS s b = case next s (result b) of
 
       currM = (psMissileCount s'')
       newM = length (getMissilesMinusTopRow (psBoard s''))
-      updateScore = if newM >= currM then s'' else s'' { psScore = (Score.addVar (psScore s'') (Just X) (currM-newM)) }
+      updateScore = if newM >= currM then s'' else s'' { psScore = (Score.addVar (psScore s'') (currM-newM)) }
       
       s''            = case psTypeCooldown s' of
         0 -> s'
         _ -> s' {psTypeCooldown = (psTypeCooldown s') - 1}
-  Left _ -> continue s {psBoard = gameOverBoard 1}
+  Left _ -> continue s {psBoard = gameOverBoard (psScore s)}
 
