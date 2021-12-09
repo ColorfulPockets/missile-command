@@ -12,7 +12,7 @@ cabal-version:       >=1.10
 executable missile-command
   main-is:             Main.hs
   build-depends:       base >=4.9, 
-                       random >=1.1 && <1.2,
+                       random,
                        containers,
                        vty, 
                        brick

@@ -20,8 +20,9 @@ main = do
     threadDelay 50000 -- decides how fast your game moves
   let buildVty = V.mkVty V.defaultConfig
   initialVty <- buildVty
-  res <- customMain initialVty buildVty (Just chan) app (Model.init)
-  print (psResult res, psScore res) 
+  _ <- customMain initialVty buildVty (Just chan) app (Model.init)
+  -- print (psResult res, psScore res) 
+  return ()
 
 app :: App PlayState Tick String
 app = App
