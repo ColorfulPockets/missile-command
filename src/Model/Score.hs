@@ -22,11 +22,13 @@ add :: Score -> Maybe CellContents -> Score
 add sc (Just X) = sc { scX = scX sc + 1 }
 add sc (Just (O _)) = sc { scO = scO sc + 1 }
 add sc Nothing  = sc { scD = scD sc + 1 }
+add sc _ = sc
 
 addVar :: Score -> Maybe CellContents -> Int -> Score
 addVar sc (Just X) i = sc { scX = scX sc + i }
 addVar sc (Just (O _)) i = sc { scO = scO sc + i }
 addVar sc Nothing i = sc { scD = scD sc + i }
+addVar sc _  _ = sc
 
 get :: Score -> CellContents -> Int
 get Score {..} X = scX 

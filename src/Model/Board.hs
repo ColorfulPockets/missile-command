@@ -198,7 +198,6 @@ remove board pos = case M.lookup pos board of
 result :: Board -> Result Board
 result b 
   | bottomRowHasMissile b = Lose
---  | wins b O  = Win  O
   | otherwise = Cont b
 
 wins :: Board -> CellContents -> Bool
@@ -465,5 +464,5 @@ getMissiles board = [ p | p <- positions, (isMissileBoard board p)]
 getMissilesMinusTopRow :: Board -> [Pos] -- returns a list of positions with missiles minus the top row
 getMissilesMinusTopRow board = [ p | p <- boardMinusTopRow, (isMissileBoard board p)]
 
-boardMinusTopRow ::  [Pos] 
+boardMinusTopRow ::  [Pos] -- returns a list of positions minus the top row
 boardMinusTopRow  = [ Pos r c | r <- [2..dim], c <- [1..dim] ] 

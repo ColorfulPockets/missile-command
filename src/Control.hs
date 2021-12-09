@@ -27,26 +27,16 @@ processScoreNext :: (PlayState, Board) -> EventM n (Next PlayState)
 -------------------------------------------------------------------------------
 processScoreNext (s', b') = nextS s' b' 
 
-
 -- number of ticks between typing at max speed
 cooldownLength :: Int
 cooldownLength = 15
 
 -------------------------------------------------------------------------------
---move :: (Pos -> Pos) -> PlayState -> PlayState
--------------------------------------------------------------------------------
---move f s = s { psPos = f (psPos s) }
-
--------------------------------------------------------------------------------
 shootChar :: PlayState -> Char -> IO Board
 -------------------------------------------------------------------------------
-shootChar s c = iterShoot s (psBoard s) posList --shoot s target
+shootChar s c = iterShoot s (psBoard s) posList
   where
     posList = Model.Board.findCharPos (psBoard s) c -- gets the position mapped to that character
-    --targets = case posList of 
-    --                [] -> [psPos s]     -- TODO: decide what should happen when the letter they typed is not associated with any missile
-    --                xs -> xs
-
 
 iterShoot :: PlayState -> Board -> [Pos] -> IO Board
 iterShoot _ b []     = return b
@@ -96,8 +86,7 @@ nextS s b = case next s (result b) of
       currM = (psMissileCount s'')
       newM = length (getMissilesMinusTopRow (psBoard s''))
       updateScore = if newM >= currM then s'' else s'' { psScore = (Score.addVar (psScore s'') (Just X) (currM-newM)) }
-
-
+      
       s''            = case psTypeCooldown s' of
         0 -> s'
         _ -> s' {psTypeCooldown = (psTypeCooldown s') - 1}
