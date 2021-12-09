@@ -21,6 +21,8 @@ module Model.Board
   , boardWinner
   
   , findCharPos
+  , getMissiles
+  , getMissilesMinusTopRow
 
   , putAndRemove2
   , travel
@@ -454,3 +456,14 @@ getFs b = case b of
     (F _ _ _) -> p : (getFs t)
     _       -> getFs t
 
+isMissileBoard :: Board -> Pos -> Bool  -- check if the content is a missile
+isMissileBoard board p = isMissile (M.lookup p board)
+
+getMissiles :: Board -> [Pos] -- returns a list of positions with missiles
+getMissiles board = [ p | p <- positions, (isMissileBoard board p)]
+
+getMissilesMinusTopRow :: Board -> [Pos] -- returns a list of positions with missiles minus the top row
+getMissilesMinusTopRow board = [ p | p <- boardMinusTopRow, (isMissileBoard board p)]
+
+boardMinusTopRow ::  [Pos] 
+boardMinusTopRow  = [ Pos r c | r <- [2..dim], c <- [1..dim] ] 
