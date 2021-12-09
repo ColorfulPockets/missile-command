@@ -10,6 +10,7 @@ module Model.Board
     -- * Board API
   , dim
   , explosionRadius
+  , explodeAround
   , initialTimer
   , (!)
   , init
@@ -22,6 +23,7 @@ module Model.Board
   , findCharPos
   , getMissiles
   , getMissilesMinusTopRow
+  , bottomRowHasMissile
 
   , putAndRemove2
   , travel
@@ -107,7 +109,7 @@ rTop = [Pos r 4 | r <- [1..dim]]
 emptyPositions :: Board -> [Pos]
 emptyPositions board  = [ p | p <- rTop, M.notMember p board]
 
--- tested -- Andrew
+-- tested
 notNone :: CellContents -> Bool
 notNone c = case c of
       None  -> False
@@ -147,9 +149,11 @@ data Result a
   deriving (Eq, Functor, Show)
 
 put :: Board -> CellContents -> Pos -> Board
-put board xo pos = case M.lookup pos board of 
+put board xo pos@(Pos r c) = case M.lookup pos board of 
   Just _  -> board
-  Nothing -> M.insert pos xo board
+  Nothing 
+    | r <= dim && r > 0 && c <= dim && c > 0 -> M.insert pos xo board
+    | otherwise -> board
 
 -- tested -- Eric
 putAndRemove2 :: Board -> ([(Pos, CellContents)], [(Pos, CellContents)]) -> Board
@@ -181,7 +185,7 @@ iterI b ((pos, contents):xs) = case b ! pos of
         (O _) -> M.insert pos contents b
         _ -> b
 
--- tested -- Andrew
+-- tested
 remove :: Board -> Pos -> (Board, CellContents)
 remove board pos = case M.lookup pos board of 
   Nothing -> (board, None)
@@ -208,7 +212,7 @@ isX c = case c of
   Just X -> True
   _   -> False
 
--- tested -- Andrew
+-- tested
 bottomRowHasMissile :: Board -> Bool
 bottomRowHasMissile b = elem True (fmap isMissile (fmap (b !) bottomRow))
 
@@ -345,7 +349,7 @@ shootSurrounding b p = explodeAround p b'''''2
       _       -> b'''''
 
 -- Generates the initial explosion ring around a shot missile
--- tested -- Andrew
+-- tested
 explodeAround :: Pos -> Board -> Board
 explodeAround p b = b'''''
   where 
@@ -568,7 +572,7 @@ isMissileBoard board p = isMissile (M.lookup p board)
 getMissiles :: Board -> [Pos] -- returns a list of positions with missiles
 getMissiles board = [ p | p <- positions, (isMissileBoard board p)]
 
--- tested -- Andrew
+-- tested
 getMissilesMinusTopRow :: Board -> [Pos] -- returns a list of positions with missiles minus the top row
 getMissilesMinusTopRow board = [ p | p <- boardMinusTopRow, (isMissileBoard board p)]
 

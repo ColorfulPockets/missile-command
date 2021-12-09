@@ -5,40 +5,48 @@ import Test.Tasty
 import Common
 import Prelude hiding (maximum)
 import Model.Board
-import qualified Data.Map as M 
 
 main :: IO ()
 main = runTests 
-  [ boardTests
-  -- , probFold
-  ]
-
--- probFold ::  Score -> TestTree
--- probFold sc = testGroup "Problem 1: Fold" 
---   [ scoreTest ((\_ -> myReverse [1,2,3,4,5]),     (), [5,4,3,2,1], 5,   "rev-1")
---   , scoreTest ((\_ -> myFoldr (-) 0 [1,2,3,4,5]), (),           3, 5, "foldr-1")
---   , scoreTest ((\_ -> myFoldl (-) 0 [1,2,3,4,5]), (),       (-15), 5, "foldl-1")
---   ]
---   where
---     scoreTest :: (Show b, Eq b) => (a -> b, a, b, Int, String) -> TestTree
---     scoreTest (f, x, r, n, msg) = scoreTest' sc (return . f, x, r, n, msg)
+  [boardTests]
 
 boardTests ::  Score -> TestTree
 boardTests sc = testGroup "Board module"
   [ scoreTest (down, (Pos 1 1),  (Pos 2 1)                      , 2, "down")
-  -- , scoreTest ((\_ -> eval store0 (Val  (IntVal 92))), (),  IntVal 92               , 2, "eval-2")
+  , scoreTest (notNone, (F 1 1 DirUp),  True                    , 2, "notNone-1")
+  , scoreTest (notNone, (O 'k'),  True                          , 2, "notNone-2")
+  , scoreTest (notNone, X,  True                                , 2, "notNone-3")
+  , scoreTest (notNone, None,  False                            , 2, "notNone-3")
+  , scoreTest (remove Model.Board.init,  (Pos 1 1), (Model.Board.init, None), 2, "remove-1")
+  , scoreTest (remove b10,  (Pos 1 1), (b10r, (F 2 2 DirDown))  , 2, "remove-2")
+  , scoreTest (remove b10,  (Pos 2 2), (b10r2, (O 'L'))         , 2, "remove-3")
+  , scoreTest (remove (gameOverBoard 0),  (Pos 2 2), ((gameOverBoard 0), (None)) , 2, "remove-4")
+  , scoreTest (remove (gameOverBoard 1),  (Pos 20 20), ((gameOverBoard 1), (None)) , 2, "remove-5")
+  , scoreTest (bottomRowHasMissile,  bBottomRow, True , 2, "bottomRowHasMissile-1")
+  , scoreTest (bottomRowHasMissile,  b10, False       , 2, "bottomRowHasMissile-2")
+  , scoreTest (explodeAround expPos, b10, bExploded   , 2, "explodeAround1")
+  , scoreTest (explodeAround expPos2, b10, bExploded2 , 2, "explodeAround2")
+  , scoreTest (getMissilesMinusTopRow, b10Top, misInB10r, 2, "getMissilesMinusTopRow1")
+  , scoreTest (getMissilesMinusTopRow, b10, misInB10r, 2, "getMissilesMinusTopRow2")
   ]
   where
     scoreTest :: (Show b, Eq b) => (a -> b, a, b, Int, String) -> TestTree
     scoreTest (f, x, r, n, msg) = scoreTest' sc (return . f, x, r, n, msg)
-
--- probParse ::  Score -> TestTree
--- probParse sc = testGroup "Problem 3: Parse"
---   [ scoreTestI ((\_ -> parseFile "test/in/fact.imp"), (), Right w_fact, 5, "parse-1")
---   , scoreTestI ((\_ -> parseFile "test/in/abs.imp"), (), Right w_abs, 5, "parse-1")
---   , scoreTestI ((\_ -> parseFile "test/in/times.imp"), (), Right w_times, 5, "parse-1")
---   , scoreTestI ((\_ -> parseFile "test/in/test.imp"), (), Right w_test, 5, "parse-1")
---   ]
---   where
---     scoreTestI :: (Show b, Eq b) => (a -> IO b, a, b, Int, String) -> TestTree
---     scoreTestI (f, x, r, n, msg) = scoreTest' sc (f, x, r, n, msg)
+    b10 = put (put Model.Board.init (F 2 2 DirDown) (Pos 1 1)) (O 'L') (Pos 2 2)
+    b10r = put Model.Board.init (O 'L') (Pos 2 2)
+    b10r2 = put Model.Board.init (F 2 2 DirDown) (Pos 1 1)
+    b10Top = put b10 (O 'R') (Pos 1 24)
+    misInB10r = [(Pos 2 2)]
+    bBottomRow = put b10 (O 'o') (Pos dim dim)
+    bExploded = put (put (put
+      (put (put b10 (F 1 10 DirUp) (up expPos)) (F 1 10 DirLeft) (left expPos))
+      (F 1 10 DirDown) (down expPos))
+      (F 1 10 DirRight) (right expPos))
+      (F 10 10 DirUp) expPos
+    bExploded2 = put (put (put
+      (put (put b10 (F 1 10 DirUp) (up expPos2)) (F 1 10 DirLeft) (left expPos2))
+      (F 1 10 DirDown) (down expPos2))
+      (F 1 10 DirRight) (right expPos2))
+      (F 10 10 DirUp) expPos2
+    expPos = (Pos 25 25)
+    expPos2 = (Pos 25 1)
