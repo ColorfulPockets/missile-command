@@ -21,6 +21,8 @@ module Model.Board
   , boardWinner
   
   , findCharPos
+  , getMissiles
+  , getMissilesMinusTopRow
 
   , putAndRemove2
   , travel
@@ -119,8 +121,8 @@ mostPos = [Pos r c | r <- [1..(dim - 1)], c <- [1..dim]]
 thingPos :: Board -> [Pos]
 thingPos board = [p | p <- mostPos, M.member p board]
 
-botRow :: [Pos]
-botRow = [Pos dim c | c <- [1..dim]]
+-- botRow :: [Pos]
+-- botRow = [Pos dim c | c <- [1..dim]]
 
 --botThing :: Board -> [Pos]
 --botThing board = [p | p <- botRow, M.notMember p board]
@@ -334,14 +336,14 @@ converter b = return (botThing b)
 --delTrail b (Pos i j) = return ((Pos (i + 1) j), (Pos i j))
 
 
-fetchZero :: [a] -> IO a
-fetchZero xs = do
-  return (xs !! 0)
+-- fetchZero :: [a] -> IO a
+-- fetchZero xs = do
+--   return (xs !! 0)
 
-selectRandom :: [a] -> IO a
-selectRandom xs = do
-  i <- randomRIO (0, length xs - 1)
-  return (xs !! i)
+-- selectRandom :: [a] -> IO a
+-- selectRandom xs = do
+--   i <- randomRIO (0, length xs - 1)
+--   return (xs !! i)
 
 
 ------------------
@@ -519,3 +521,14 @@ gameOverHelper b (p:ps) = gameOverHelper (put b X p) ps
 addScoreTo :: Board -> Int -> Board
 addScoreTo b _ = b
 
+isMissileBoard :: Board -> Pos -> Bool  -- check if the content is a missile
+isMissileBoard board p = isMissile (M.lookup p board)
+
+getMissiles :: Board -> [Pos] -- returns a list of positions with missiles
+getMissiles board = [ p | p <- positions, (isMissileBoard board p)]
+
+getMissilesMinusTopRow :: Board -> [Pos] -- returns a list of positions with missiles minus the top row
+getMissilesMinusTopRow board = [ p | p <- boardMinusTopRow, (isMissileBoard board p)]
+
+boardMinusTopRow ::  [Pos] -- returns a list of positions minus the top row
+boardMinusTopRow  = [ Pos r c | r <- [2..dim], c <- [1..dim] ] 

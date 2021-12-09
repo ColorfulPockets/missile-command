@@ -19,7 +19,6 @@ view s = [view' s]
 view' :: PlayState -> Widget String
 view' s = 
   withBorderStyle unicode $
-    -- border $
     borderWithLabel ((str (header)) <+> (status)) $
       vTile [ mkRow s row | row <- [1..dim] ]
         where 
@@ -29,23 +28,15 @@ view' s =
             True  -> (blackForeground (greenBackground (str " Active "))) <+> (str "  ")
             False -> (blackForeground (withX (str "   --   "))) <+> (str "  ")
 
-  
-          
-            
-            
-
 mkRow :: PlayState -> Int -> Widget n
 mkRow s row = hTile [ mkCell s row i | i <- [1..dim] ]
 
 mkCell :: PlayState -> Int -> Int -> Widget n
 mkCell s r c 
-  | isCurr s r c = raw --withCursor raw 
+  | isCurr s r c = raw 
   | otherwise    = raw 
   where
     raw = mkCell' s r c
-
--- withCursor :: Widget n -> Widget n
--- withCursor = modifyDefAttr (`withStyle` reverseVideo)
 
 withX :: Widget n -> Widget n
 withX = modifyDefAttr (`withBackColor` red)
@@ -69,14 +60,9 @@ blackBackground :: Widget n -> Widget n
 blackBackground = modifyDefAttr (`withBackColor` black)
 
 mkCell' :: PlayState -> Int -> Int -> Widget n
--- mkCell' _ r c = center (str (printf "(%d, %d)" r c))
 mkCell' s r c = (mkCellContents xoMb)
   where 
     xoMb      = psBoard s ! Pos r c
-    -- xoMb 
-    --   | r == c    = Just X 
-    --   | r > c     = Just O 
-    --   | otherwise = Nothing
 
 mkCellContents :: Maybe CellContents -> Widget n
 mkCellContents (Just X) = blockX
@@ -85,9 +71,6 @@ mkCellContents (Just (F _ _ _)) = blockF
 mkCellContents _  = blockB
 
 blockB, blockX, blockF :: Widget n
--- blockB = vBox [fill ' ']
--- blockX = vBox [fill 'X']
--- blockO = vBox [fill 'O']
 blockB = blackBackground (vBox [ str "  "])
 blockX = withX (vBox [str "  "])
 blockF = withF (vBox [ str "  "])
