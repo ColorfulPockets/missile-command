@@ -14,6 +14,7 @@ view :: PlayState -> [Widget String]
 -------------------------------------------------------------------------------
 view s = [view' s]
 
+-- tested -- Andrew
 view' :: PlayState -> Widget String
 view' s = 
   withBorderStyle unicode $

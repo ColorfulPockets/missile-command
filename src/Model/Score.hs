@@ -11,6 +11,7 @@ type Score = Int
 init :: Int -> Score
 init n = n
 
+-- tested -- Bhavani
 -- Adds one point to score
 add :: Score -> Score
 add sc = sc + 1

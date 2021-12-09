@@ -18,7 +18,6 @@ module Model.Board
   , notNone
   , positions
   , emptyPositions
-  , boardWinner
   
   , findCharPos
   , getMissiles
@@ -104,9 +103,11 @@ positions = [ Pos r c | r <- [1..dim], c <- [1..dim] ]
 rTop :: [Pos]
 rTop = [Pos r 4 | r <- [1..dim]]
 
+-- tested -- Eric
 emptyPositions :: Board -> [Pos]
 emptyPositions board  = [ p | p <- rTop, M.notMember p board]
 
+-- tested -- Andrew
 notNone :: CellContents -> Bool
 notNone c = case c of
       None  -> False
@@ -122,6 +123,7 @@ thingPos board = [p | p <- mostPos, M.member p board]
 botThing :: Board -> [Pos]
 botThing b = [Pos dim c | c <- [1..dim], notIn b dim c]
 
+-- tested --Bhavani
 notIn :: Board -> Int -> Int -> Bool
 notIn _ 0 _ = True
 notIn b r c = if M.notMember (Pos r c) b then notIn b (r - 1) c 
@@ -149,7 +151,7 @@ put board xo pos = case M.lookup pos board of
   Just _  -> board
   Nothing -> M.insert pos xo board
 
-
+-- tested -- Eric
 putAndRemove2 :: Board -> ([(Pos, CellContents)], [(Pos, CellContents)]) -> Board
 putAndRemove2 board (pos, toRemove) = (iterI b' pos)
   where
@@ -179,12 +181,13 @@ iterI b ((pos, contents):xs) = case b ! pos of
         (O _) -> M.insert pos contents b
         _ -> b
 
-
+-- tested -- Andrew
 remove :: Board -> Pos -> (Board, CellContents)
 remove board pos = case M.lookup pos board of 
   Nothing -> (board, None)
   Just c  -> ((M.delete pos board), c)
 
+-- tested -- Bhavani
 result :: Board -> Result Board
 result b 
   | bottomRowHasMissile b = Lose
@@ -194,6 +197,7 @@ result b
 bottomRow :: [Pos]
 bottomRow = [Pos dim c | c <- [1..dim]]
 
+-- tested -- Eric
 isMissile :: Maybe CellContents -> Bool
 isMissile c = case c of
   Just (O _) -> True
@@ -204,6 +208,7 @@ isX c = case c of
   Just X -> True
   _   -> False
 
+-- tested -- Andrew
 bottomRowHasMissile :: Board -> Bool
 bottomRowHasMissile b = elem True (fmap isMissile (fmap (b !) bottomRow))
 
@@ -219,6 +224,7 @@ up p = p
   { pRow = max 1 (pRow p - 1) 
   } 
 
+-- tested -- Bhavani
 down :: Pos -> Pos
 down p = p 
   { pRow = min dim (pRow p + 1) 
@@ -234,13 +240,6 @@ right p = p
   { pCol = min dim (pCol p + 1) 
   } 
 
-boardWinner :: Result a -> Maybe CellContents
-boardWinner (Win xo) = Just xo
-boardWinner _        = Nothing
-
-
-
-
 --------------------------------
 -- STUFF PREVIOUSLY IN PLAYER -- 
 --------------------------------
@@ -255,6 +254,8 @@ travel b n = do
     thingsWithCells = posWithCellContents thingsOnBoard b
     --p = trailHelper t b
 
+-- tested -- Eric
+-- Takes a list of Pos, and a board, and returns a list of (Pos, CellContents) at those pos on the board
 posWithCellContents :: [Pos] -> Board -> [(Pos, CellContents)]
 posWithCellContents [] _ = []
 posWithCellContents (p:ps) b = case (b ! p) of
@@ -344,6 +345,7 @@ shootSurrounding b p = explodeAround p b'''''2
       _       -> b'''''
 
 -- Generates the initial explosion ring around a shot missile
+-- tested -- Andrew
 explodeAround :: Pos -> Board -> Board
 explodeAround p b = b'''''
   where 
@@ -415,6 +417,7 @@ propogateQuadrant b p dir i t posDir1 posDir2 = b''''
     b''''       = put b''' (F (i+1) (t-1) dir) (posDir2 p)
 
 -- Returns a list of Pos where the CellContents is F
+-- tested -- Bhavani
 getFs :: [(Pos, CellContents)] -> [Pos]
 getFs b = case b of
   []  -> []
@@ -561,9 +564,11 @@ mkNumbers [] _ _ = []
 isMissileBoard :: Board -> Pos -> Bool  -- check if the content is a missile
 isMissileBoard board p = isMissile (M.lookup p board)
 
+-- tested -- Eric
 getMissiles :: Board -> [Pos] -- returns a list of positions with missiles
 getMissiles board = [ p | p <- positions, (isMissileBoard board p)]
 
+-- tested -- Andrew
 getMissilesMinusTopRow :: Board -> [Pos] -- returns a list of positions with missiles minus the top row
 getMissilesMinusTopRow board = [ p | p <- boardMinusTopRow, (isMissileBoard board p)]
 
