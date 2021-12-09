@@ -41,14 +41,14 @@ shootChar :: PlayState -> Char -> IO Board
 shootChar s c = iterShoot s (psBoard s) posList --shoot s target
   where
     posList = Model.Board.findCharPos (psBoard s) c -- gets the position mapped to that character
-    targets = case posList of 
-                    [] -> [psPos s]     -- TODO: decide what should happen when the letter they typed is not associated with any missile
-                    xs -> xs
+    --targets = case posList of 
+    --                [] -> [psPos s]     -- TODO: decide what should happen when the letter they typed is not associated with any missile
+    --                xs -> xs
 
 
 iterShoot :: PlayState -> Board -> [Pos] -> IO Board
-iterShoot s b []     = return b
-iterShoot s b (x:xs) = do
+iterShoot _ b []     = return b
+iterShoot s _ (x:xs) = do
   b' <- shoot s x
   iterShoot (s {psBoard = b'}) b' xs
 
