@@ -84,7 +84,7 @@ data Pos = Pos
   { pRow :: Int  -- 1 <= pRow <= dim 
   , pCol :: Int  -- 1 <= pCol <= dim
   }
-  deriving (Eq, Ord)
+  deriving (Eq, Ord, Show)
 
 (!) :: Board -> Pos -> Maybe CellContents 
 board ! pos = M.lookup pos board
