@@ -16,8 +16,10 @@ module Model.Board
   , put
   , remove
   , notNone
+  , notIn
   , positions
   , emptyPositions
+  , getFs
   
   , findCharPos
   , getMissiles
@@ -218,7 +220,7 @@ gameOverDisplayed b = elem True (fmap isX (fmap (b !) mostPos))
 -------------------------------------------------------------------------------
 -- | Moves 
 -------------------------------------------------------------------------------
-
+-- tested -- Bhavani
 up :: Pos -> Pos 
 up p = p 
   { pRow = max 1 (pRow p - 1) 
@@ -230,11 +232,13 @@ down p = p
   { pRow = min dim (pRow p + 1) 
   } 
 
+-- tested -- Bhavani
 left :: Pos -> Pos 
 left p = p 
   { pCol   = max 1 (pCol p - 1) 
   } 
 
+-- tested -- Bhavani
 right :: Pos -> Pos 
 right p = p 
   { pCol = min dim (pCol p + 1) 
@@ -252,7 +256,6 @@ travel b n = do
   where
     thingsOnBoard = thingPos b
     thingsWithCells = posWithCellContents thingsOnBoard b
-    --p = trailHelper t b
 
 -- tested -- Eric
 -- Takes a list of Pos, and a board, and returns a list of (Pos, CellContents) at those pos on the board

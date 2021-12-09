@@ -11,8 +11,9 @@ cabal-version:       >=1.10
 
 Library
   ghc-options:        -W
-  exposed-modules:    Model.Board
-
+  exposed-modules:    Model.Board,
+                      Model.Score
+                      
   Default-Extensions: OverloadedStrings
 
   -- other-extensions:
