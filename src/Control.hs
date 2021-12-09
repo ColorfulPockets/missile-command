@@ -16,15 +16,13 @@ import Data.Char
 -------------------------------------------------------------------------------
 
 control :: PlayState -> BrickEvent n Tick -> EventM n (Next PlayState)
-control s ev = case ev of 
-  AppEvent Tick                   -> nextS s =<< liftIO (progressBoard s)
-  T.VtyEvent (V.EvKey V.KEnter _) -> nextS s =<< liftIO (progressBoard s)    
-  T.VtyEvent (V.EvKey V.KEsc _)   -> Brick.halt s
-  T.VtyEvent (V.EvKey (V.KChar c) _) -> case psTypeCooldown s of
-    0 -> nextS (s {psTypeCooldown = cooldownLength}) =<< liftIO (shootChar s (toUpper c))    -- when a certain letter is clicked, that missile is shot
-    _ -> nextS s =<< liftIO (progressBoard s)
-  _                               -> Brick.continue s -- Brick.halt s
-
+control s ev =  case ev of 
+      AppEvent Tick                   -> nextS s =<< liftIO (progressBoard s)  
+      T.VtyEvent (V.EvKey V.KEsc _)   -> Brick.halt s
+      T.VtyEvent (V.EvKey (V.KChar c) _) -> case psTypeCooldown s of
+        0 -> nextS (s {psTypeCooldown = cooldownLength}) =<< liftIO (shootChar s (toUpper c))    -- when a certain letter is clicked, that missile is shot
+        _ -> nextS s =<< liftIO (progressBoard s)
+      _                               -> Brick.continue s
 
 -- number of ticks between typing at max speed
 cooldownLength :: Int
@@ -76,7 +74,9 @@ getPos s = do
 -------------------------------------------------------------------------------
 progressBoard :: PlayState -> IO (Board)
 -------------------------------------------------------------------------------
-progressBoard s = case psMoveMissiles s of
+progressBoard s = case result (psBoard s) of
+  Lose -> return (psBoard s)
+  _    -> case psMoveMissiles s of
     0 -> do
       b <- putAndRemove2 (psBoard s) <$> getPos s-- this line moves all the misiles downward
       return (moveExplosions b)
@@ -97,6 +97,5 @@ nextS s b = case next s (result b) of
       s''            = case psTypeCooldown s' of
         0 -> s'
         _ -> s' {psTypeCooldown = (psTypeCooldown s') - 1}
-  Left _ -> halt (s) 
-
+  Left _ -> continue s {psBoard = gameOverBoard 1}
 

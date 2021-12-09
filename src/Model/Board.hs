@@ -38,6 +38,9 @@ module Model.Board
   -- Control
   , shootSurrounding
   , moveExplosions
+
+  -- Visual
+  , gameOverBoard
   )
   where
 
@@ -196,22 +199,8 @@ remove board pos = case M.lookup pos board of
 result :: Board -> Result Board
 result b 
   | bottomRowHasMissile b = Lose
---  | wins b O  = Win  O
+  | gameOverDisplayed b   = Lose
   | otherwise = Cont b
-
-wins :: Board -> CellContents -> Bool
-wins b xo = or [ winsPoss b xo ps | ps <- winPositions ]
-
-winsPoss :: Board -> CellContents -> [Pos] -> Bool
-winsPoss b xo ps = and [ b!p == Just xo | p <- ps ]
-
-winPositions :: [[Pos]]
-winPositions = rows ++ cols ++ diags 
-
-rows, cols, diags :: [[Pos]]
-rows  = [[Pos r c | c <- [1..dim]] | r <- [1..dim]]
-cols  = [[Pos r c | r <- [1..dim]] | c <- [1..dim]]
-diags = [[Pos i i | i <- [1..dim]], [Pos i (dim+1-i) | i <- [1..dim]]]
 
 bottomRow :: [Pos]
 bottomRow = [Pos dim c | c <- [1..dim]]
@@ -221,11 +210,16 @@ isMissile c = case c of
   Just (O _) -> True
   _   -> False
 
-isFull :: Board -> Bool
-isFull b = M.size b == dim * dim
+isX :: Maybe CellContents -> Bool
+isX c = case c of
+  Just X -> True
+  _   -> False
 
 bottomRowHasMissile :: Board -> Bool
 bottomRowHasMissile b = elem True (fmap isMissile (fmap (b !) bottomRow))
+
+gameOverDisplayed :: Board -> Bool
+gameOverDisplayed b = elem True (fmap isX (fmap (b !) mostPos))
 
 -------------------------------------------------------------------------------
 -- | Moves 
@@ -453,4 +447,75 @@ getFs b = case b of
   ((p, c) : t) -> case c of
     (F _ _ _) -> p : (getFs t)
     _       -> getFs t
+
+
+--------------------------------
+
+-- generates pixel art based on the string, offset by int inputs.
+mkLetter :: String -> Int -> Int -> [Pos]
+mkLetter s@(char : chars) r c = if char == '*' 
+  then (Pos r c) : (mkLetter chars newr newc)
+  else  mkLetter chars newr newc
+    where
+      newc = 
+        if ((length s) == 1) 
+          || ((length s) == 6)  
+          || ((length s) == 11) 
+          || ((length s) == 16) 
+          || ((length s) == 21)
+          || ((length s) == 26)
+          || ((length s) == 31)
+        then c - 4
+        else c + 1
+      newr = 
+        if ((length s) == 1) 
+          || ((length s) == 6)  
+          || ((length s) == 11) 
+          || ((length s) == 16) 
+          || ((length s) == 21)
+          || ((length s) == 26)
+          || ((length s) == 31)
+        then r + 1
+        else r
+mkLetter _ _ _  = []
+
+endScreen :: [Pos]
+endScreen = 
+  (mkLetter g i j)
+  ++ (mkLetter a (i) (1*offsetH + j))
+  ++ (mkLetter m (i) (2*offsetH + j))
+  ++ (mkLetter e (i) (3*offsetH + j))
+  ++ (mkLetter o (offsetV + i) (j))
+  ++ (mkLetter v (offsetV + i) (1*offsetH + j))
+  ++ (mkLetter e (offsetV + i) (2*offsetH + j))
+  ++ (mkLetter r (offsetV + i) (3*offsetH + j))
+  ++ (mkLetter s (3*offsetV + i - 4) (j - 3))
+  ++ (mkLetter c (3*offsetV + i - 4) (1*offsetH + j - 3))
+  ++ (mkLetter o (3*offsetV + i - 4) (2*offsetH + j - 3))
+  ++ (mkLetter r (3*offsetV + i - 4) (3*offsetH + j - 3))
+  ++ (mkLetter e (3*offsetV + i - 4) (4*offsetH + j - 3))
+    where
+      g = " *****    *    *  ***   **   * *** "
+      a = "  *   * * *   **   *******   **   *"
+      m = "*   *** *** * **   **   **   **   *"
+      e = "******    *    ******    *    *****"
+      o = " *** *   **   **   **   **   * *** "
+      v = "*   **   **   **   **   * * *   *  "
+      r = "**** *   **   ***** *   **   **   *"
+      s = " *****    *     ***     *    ***** "
+      c = " *****    *    *    *    *     ****"
+      i = 6
+      j = 14
+      offsetH = 6
+      offsetV = 9
+
+gameOverBoard :: Int -> Board
+gameOverBoard score = addScoreTo (gameOverHelper M.empty endScreen) score
+
+gameOverHelper :: Board -> [Pos] -> Board
+gameOverHelper b [] = b
+gameOverHelper b (p:ps) = gameOverHelper (put b X p) ps
+
+addScoreTo :: Board -> Int -> Board
+addScoreTo b _ = b
 

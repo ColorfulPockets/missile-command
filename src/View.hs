@@ -89,7 +89,7 @@ blockB, blockX, blockF :: Widget n
 -- blockX = vBox [fill 'X']
 -- blockO = vBox [fill 'O']
 blockB = blackBackground (vBox [ str "  "])
-blockX = whiteForeground (vBox [str " "])
+blockX = withX (vBox [str "  "])
 blockF = withF (vBox [ str "  "])
 
 blockO :: Char -> Widget n
@@ -102,3 +102,6 @@ vTile _      = emptyWidget
 hTile :: [Widget n] -> Widget n
 hTile (b:bs) = hBox (b : [b | b <- bs])
 hTile _      = emptyWidget
+
+-----------------------------------------------------------------------------
+
