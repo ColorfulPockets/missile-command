@@ -1,13 +1,11 @@
 module View (view) where
 
 import Brick 
--- import Brick.Widgets.Center (center)
 import Brick.Widgets.Border (borderWithLabel)
 import Brick.Widgets.Border.Style (unicode)
 import Text.Printf (printf)
 
 import Model
--- import qualified Model.Score  as Score
 import Model.Board
 import Graphics.Vty hiding (dim)
 
@@ -40,9 +38,6 @@ mkCell s r c
 
 withX :: Widget n -> Widget n
 withX = modifyDefAttr (`withBackColor` red)
-
--- withO :: Widget n -> Widget n
--- withO = modifyDefAttr (`withBackColor` blue)
 
 withF :: Widget n -> Widget n
 withF = modifyDefAttr (`withBackColor` yellow)

@@ -102,30 +102,21 @@ positions :: [Pos]
 positions = [ Pos r c | r <- [1..dim], c <- [1..dim] ] 
 
 rTop :: [Pos]
-rTop = [Pos r 4 | r <- [1..dim]] --TODO
+rTop = [Pos r 4 | r <- [1..dim]]
 
 emptyPositions :: Board -> [Pos]
-emptyPositions board  = [ p | p <- rTop, M.notMember p board] -- TODO
+emptyPositions board  = [ p | p <- rTop, M.notMember p board]
 
 notNone :: CellContents -> Bool
 notNone c = case c of
       None  -> False
       _     -> True
 
---emptyPositions :: Board -> [Pos]
---emptyPositions board  = [ p | p <- positions, M.notMember p board]
-
 mostPos :: [Pos]
 mostPos = [Pos r c | r <- [1..(dim - 1)], c <- [1..dim]]
 
 thingPos :: Board -> [Pos]
 thingPos board = [p | p <- mostPos, M.member p board]
-
--- botRow :: [Pos]
--- botRow = [Pos dim c | c <- [1..dim]]
-
---botThing :: Board -> [Pos]
---botThing board = [p | p <- botRow, M.notMember p board]
 
 -- List of columns that don't have a missile
 botThing :: Board -> [Pos]
@@ -158,10 +149,6 @@ put board xo pos = case M.lookup pos board of
   Just _  -> board
   Nothing -> M.insert pos xo board
 
---putAndRemove :: Board -> CellContents -> (Pos, Pos) -> Result Board
---putAndRemove board xo (pos, toRemove) = case M.lookup pos board of 
---  Just _  -> Retry
---  Nothing -> result (M.insert pos xo (fst (remove board toRemove)))
 
 putAndRemove2 :: Board -> ([(Pos, CellContents)], [(Pos, CellContents)]) -> Board
 putAndRemove2 board (pos, toRemove) = (iterI b' pos)
@@ -315,8 +302,6 @@ trailHelper xs b n = do
       return (if y == 0 then xs else ((Pos 1 y), (O c)) : xs)
   else
     return xs
---  where
---    (Pos _ y) = botThing b !! 0
 
 
 -- Fetch a random column that doesn't have a missile
@@ -331,19 +316,6 @@ fetcher b = do
 
 converter :: Board -> IO [Pos]
 converter b = return (botThing b)
-
---delTrail :: Board -> Pos -> IO (Pos, Pos)
---delTrail b (Pos i j) = return ((Pos (i + 1) j), (Pos i j))
-
-
--- fetchZero :: [a] -> IO a
--- fetchZero xs = do
---   return (xs !! 0)
-
--- selectRandom :: [a] -> IO a
--- selectRandom xs = do
---   i <- randomRIO (0, length xs - 1)
---   return (xs !! i)
 
 
 ------------------

@@ -21,7 +21,7 @@ control s ev = case ev of
   T.VtyEvent (V.EvKey V.KEsc _)   -> Brick.halt s
   T.VtyEvent (V.EvKey (V.KChar c) _) -> case psTypeCooldown s of
     0 -> nextS (s {psTypeCooldown = cooldownLength}) =<< liftIO (shootChar s (toUpper c))    -- when a certain letter is clicked, that missile is shot
-    _ -> nextS s =<< liftIO (progressBoard s)
+    _ -> nextS s =<< liftIO (progressBoard s)    -- if cooldown period not over, progressBoard don't shoot
   _                               -> Brick.continue s -- Brick.halt s
 
 
@@ -72,6 +72,7 @@ progressBoard s = case result (psBoard s) of
       return (moveExplosions b)
     _ -> return (moveExplosions (psBoard s))
 
+--Progresses the current state to the next one 
 -------------------------------------------------------------------------------
 nextS :: PlayState -> Board -> EventM n (Next PlayState)
 -------------------------------------------------------------------------------
