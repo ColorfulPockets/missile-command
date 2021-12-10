@@ -30,9 +30,6 @@ module Model.Board
   , travel
   , result
 
-  , thingPos
-  , botThing
-
     -- * Moves
   , up
   , down
@@ -65,17 +62,16 @@ type Board = M.Map Pos CellContents
 
 checkMatch :: Board -> Char -> Pos -> Bool  -- check if the char is in this position
 checkMatch board c p = case M.lookup p board of 
-  Nothing -> False
-  Just (O l) -> if l == c then True else False
-  Just _ -> False
+  Just (Ms l) -> l == c
+  _          -> False
 
 findCharPos :: Board -> Char -> [Pos] -- returns a list of positions for that letter
-findCharPos board c = [ p | p <- positions, (checkMatch board c p)]
+findCharPos board c = [ p | p <- positions, checkMatch board c p]
 
 data CellContents 
   = X 
-  | O { letter :: Char }
-  | F {distance :: Int, timer :: Int, dir :: Direct}
+  | Ms { letter :: Char }
+  | Fire {distance :: Int, timer :: Int, dir :: Direct}
   | None
   deriving (Eq, Show)
 
@@ -107,35 +103,28 @@ initialTimer = 10
 positions :: [Pos]
 positions = [ Pos r c | r <- [1..dim], c <- [1..dim] ] 
 
---rTop :: [Pos]
---rTop = [Pos r 4 | r <- [1..dim]]
-
--- tested -- Eric
---emptyPositions :: Board -> [Pos]
---emptyPositions board  = [ p | p <- rTop, M.notMember p board]
-
 -- tested
 notNone :: CellContents -> Bool
 notNone c = case c of
       None  -> False
       _     -> True
 
-mostPos :: [Pos]
-mostPos = [Pos r c | r <- [1..(dim - 1)], c <- [1..dim]]
+playAreaPos :: [Pos]
+playAreaPos = [Pos r c | r <- [1..(dim - 1)], c <- [1..dim]]
 
-thingPos :: Board -> [Pos]
-thingPos board = [p | p <- mostPos, M.member p board]
+itemsPos :: Board -> [Pos]
+itemsPos board = [p | p <- playAreaPos, M.member p board]
 
 -- List of columns that don't have a missile
-botThing :: Board -> [Pos]
-botThing b = [Pos dim c | c <- [1..dim], notIn b dim c]
+uniqueCols :: Board -> IO [Pos]
+uniqueCols b = return [Pos dim c | c <- [1..dim], notIn b dim c]
 
 -- tested
 notIn :: Board -> Int -> Int -> Bool
 notIn _ 0 _ = True
 notIn b r c = if M.notMember (Pos r c) b then notIn b (r - 1) c 
   else case b ! (Pos r c) of
-    Just (O _) -> False
+    Just (Ms _) -> False
     _ -> True
 
 init :: Board
@@ -172,23 +161,24 @@ iterR b []       = b
 iterR b ((pos, contents):xs) = iterR b' xs
   where
     b' = case contents of
-      (O _) -> fst (remove b pos)
-      _      -> b
+      (Ms _) -> fst (remove b pos)
+      _     -> b
 
 
 iterI :: Board -> [(Pos, CellContents)] -> Board
 iterI b []       = b
 iterI b ((pos, contents):xs) = case b ! pos of
-  Just (F _ _ _) -> iterI b' xs
+  Just (Fire _ _ _) -> iterI b' xs
     where
       b' =  case contents of
-        (O _) -> shootSurrounding b pos
+        (Ms _) -> shootSurrounding b pos
         _     -> b
+
   _ -> iterI b' xs
     where
       b' = case contents of 
-        (O _) -> M.insert pos contents b
-        _ -> b
+        (Ms _) -> M.insert pos contents b
+        _     -> b
 
 -- tested
 remove :: Board -> Pos -> (Board, CellContents)
@@ -209,7 +199,7 @@ bottomRow = [Pos dim c | c <- [1..dim]]
 -- tested -- Eric
 isMissile :: Maybe CellContents -> Bool
 isMissile c = case c of
-  Just (O _) -> True
+  Just (Ms _) -> True
   _   -> False
 
 isX :: Maybe CellContents -> Bool
@@ -222,7 +212,7 @@ bottomRowHasMissile :: Board -> Bool
 bottomRowHasMissile b = elem True (fmap isMissile (fmap (b !) bottomRow))
 
 gameOverDisplayed :: Board -> Bool
-gameOverDisplayed b = elem True (fmap isX (fmap (b !) mostPos))
+gameOverDisplayed b = elem True (fmap isX (fmap (b !) playAreaPos))
 
 -------------------------------------------------------------------------------
 -- | Moves 
@@ -261,7 +251,7 @@ travel b n = do
   trail_deleted <- (delTrailIter posL)
   trailConvert trail_deleted
   where
-    thingsOnBoard = thingPos b
+    thingsOnBoard = itemsPos b
     thingsWithCells = posWithCellContents thingsOnBoard b
 
 -- tested -- Eric
@@ -269,8 +259,8 @@ travel b n = do
 posWithCellContents :: [Pos] -> Board -> [(Pos, CellContents)]
 posWithCellContents [] _ = []
 posWithCellContents (p:ps) b = case b ! p of
-  Just c  -> (p, c) : (posWithCellContents ps b)
-  _       -> posWithCellContents ps b
+  Just c -> (p, c) : posWithCellContents ps b
+  _      -> posWithCellContents ps b
 
 trailConvert :: [(a, a)] -> IO ([a], [a])
 trailConvert p = return (unzip p)
@@ -300,9 +290,8 @@ delTrailIter (e@((Pos i j), c):xs) = do
 trailHelper :: [(Pos, CellContents)] -> Board -> Int -> IO [(Pos, CellContents)]
 trailHelper [] b _ = do
                       c <- randomRIO ('A', 'Z') :: IO Char
-                      return [((Pos 1 y), (O c))]
-  where
-    (Pos _ y) = botThing b !! 0
+                      (Pos _ y) <- fetcher b
+                      return [((Pos 1 y), (Ms c))]
 
 trailHelper xs b n = do
   i <- randomRIO (0, n) :: IO Int
@@ -310,7 +299,7 @@ trailHelper xs b n = do
     do
       (Pos _ y) <- fetcher b
       c <- randomRIO ('A', 'Z') :: IO Char
-      return (if y == 0 then xs else ((Pos 1 y), (O c)) : xs)
+      return (if y == 0 then xs else ((Pos 1 y), (Ms c)) : xs)
   else
     return xs
 
@@ -318,15 +307,12 @@ trailHelper xs b n = do
 -- Fetch a random column that doesn't have a missile
 fetcher :: Board -> IO Pos
 fetcher b = do
-  allPos <- converter b
+  allPos <- uniqueCols b
   case allPos of
     [] -> return (Pos 0 0)
     _  -> do
       i <- randomRIO (0, (length allPos - 1))
       return (allPos !! i)
-
-converter :: Board -> IO [Pos]
-converter b = return (botThing b)
 
 
 ------------------
@@ -337,21 +323,25 @@ shootSurrounding :: Board -> Pos -> Board
 shootSurrounding b p = explodeAround p b'''''2
   where
     (b',      _)       = remove b p
-    (b''    , c'')      = remove b'    (up p) -- up
+    (b''    , c'')     = remove b'    (up p) -- up
+
     b''2               = case c'' of 
-      (O _)   ->  shootSurrounding b'' (up p) 
+      (Ms _)   ->  shootSurrounding b'' (up p) 
       _       -> b''
-    (b'''   , c''')     = remove b''2   (down p) -- down
+    (b'''   , c''')    = remove b''2   (down p) -- down
+
     b'''2              = case c''' of
-      (O _)   -> shootSurrounding b''' (down p)
+      (Ms _)   -> shootSurrounding b''' (down p)
       _       ->  b'''
-    (b''''  , c'''')    = remove b'''2  (left p) -- left
+    (b''''  , c'''')   = remove b'''2  (left p) -- left
+
     b''''2             = case c'''' of
-      (O _)   ->  shootSurrounding b'''' (left p) 
+      (Ms _)   ->  shootSurrounding b'''' (left p) 
       _       ->  b''''
-    (b''''' , c''''')   = remove b''''2 (right p) -- right
+    (b''''' , c''''')  = remove b''''2 (right p) -- right
+
     b'''''2            = case c''''' of
-      (O _)   -> shootSurrounding b''''' (right p) 
+      (Ms _)   -> shootSurrounding b''''' (right p) 
       _       -> b'''''
 
 -- Generates the initial explosion ring around a shot missile
@@ -359,13 +349,13 @@ shootSurrounding b p = explodeAround p b'''''2
 explodeAround :: Pos -> Board -> Board
 explodeAround p b = b'''''
   where 
-    b' = put b (F 1 initialTimer DirUp) (up p) -- up
-    b'' = put b'  (F 1 initialTimer DirDown) (down p) -- down
-    b''' = put b'' (F 1 initialTimer DirLeft) (left p) -- left
-    b'''' = put b''' (F 1 initialTimer DirRight) (right p) -- right
-    b''''' = put b'''' (F explosionRadius initialTimer DirUp) p
+    b' = put b (Fire 1 initialTimer DirUp) (up p) -- up
+    b'' = put b'  (Fire 1 initialTimer DirDown) (down p) -- down
+    b''' = put b'' (Fire 1 initialTimer DirLeft) (left p) -- left
+    b'''' = put b''' (Fire 1 initialTimer DirRight) (right p) -- right
+    b''''' = put b'''' (Fire explosionRadius initialTimer DirUp) p
 -- Remember -- CellContents F have format:
---    (F radius timer direction)
+--    (Fire radius timer direction)
 --    Timer counts down from the radius so that the farthest cells are filled for the shortest time
 --    Radius counts up to the radius to know when it has reached it
 
@@ -380,14 +370,14 @@ moveEachExplosion :: [Pos] -> Board -> Board
 moveEachExplosion fs b = case fs of
   []  -> b
   (p : ps) -> case b ! p of
-    Just (F i t d) -> 
+    Just (Fire i t d) -> 
       if i < explosionRadius 
       then moveEachExplosion ps (propogateInDirection p i t d b' )
       else moveEachExplosion ps b'
       where 
         b' = case t of
           0   -> b''
-          _   -> put b'' (F explosionRadius (t-1) d) p 
+          _   -> put b'' (Fire explosionRadius (t-1) d) p 
           -- setting the radius to max means this won't propogate after the first time it does
         (b'', _) = remove b p
     _       -> moveEachExplosion ps b
@@ -426,14 +416,14 @@ propogateQuadrant b p dir i t posDir1 posDir2 = b''''
   where 
     (b', c')     = remove b (posDir1 p)
     b'2          = case c' of 
-      (O _) -> shootSurrounding b' (posDir1 p) 
+      (Ms _) -> shootSurrounding b' (posDir1 p) 
       _     -> b'
     (b'', c'')    = remove b'2 (posDir2 p)
     b''2          = case c'' of 
-      (O _) -> shootSurrounding b'' (posDir2 p) 
+      (Ms _) -> shootSurrounding b'' (posDir2 p) 
       _     -> b''
-    b'''        = put b''2 (F (i+1) (t-1) dir) (posDir1 p)
-    b''''       = put b''' (F (i+1) (t-1) dir) (posDir2 p)
+    b'''        = put b''2 (Fire (i+1) (t-1) dir) (posDir1 p)
+    b''''       = put b''' (Fire (i+1) (t-1) dir) (posDir2 p)
 
 -- Returns a list of Pos where the CellContents is F
 -- tested
@@ -441,7 +431,7 @@ getFs :: [(Pos, CellContents)] -> [Pos]
 getFs b = case b of
   []  -> []
   ((p, c) : t) -> case c of
-    (F _ _ _) -> p : (getFs t)
+    (Fire _ _ _) -> p : (getFs t)
     _       -> getFs t
 
 
@@ -585,11 +575,11 @@ isMissileBoard board p = isMissile (M.lookup p board)
 
 -- tested -- Eric
 getMissiles :: Board -> [Pos] -- returns a list of positions with missiles
-getMissiles board = [ p | p <- positions, (isMissileBoard board p)]
+getMissiles board = [ p | p <- positions, isMissileBoard board p]
 
 -- tested
 getMissilesMinusTopRow :: Board -> [Pos] -- returns a list of positions with missiles minus the top row
-getMissilesMinusTopRow board = [ p | p <- boardMinusTopRow, (isMissileBoard board p)]
+getMissilesMinusTopRow board = [ p | p <- boardMinusTopRow, isMissileBoard board p]
 
 boardMinusTopRow ::  [Pos] -- returns a list of positions minus the top row
 boardMinusTopRow  = [ Pos r c | r <- [2..dim], c <- [1..dim] ] 

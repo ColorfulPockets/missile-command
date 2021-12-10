@@ -63,8 +63,8 @@ mkCell' s r c = (mkCellContents xoMb)
 
 mkCellContents :: Maybe CellContents -> Widget n
 mkCellContents (Just X) = blockX
-mkCellContents (Just (O c)) = blockO c
-mkCellContents (Just (F _ _ _)) = blockF
+mkCellContents (Just (Ms c)) = blockO c
+mkCellContents (Just (Fire _ _ _)) = blockF
 mkCellContents _  = blockB
 
 blockB, blockX, blockF :: Widget n
