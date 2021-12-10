@@ -25,7 +25,7 @@ main = do
     threadDelay 50000 -- decides how fast your game moves
   let buildVty = V.mkVty V.defaultConfig
   initialVty <- buildVty
-  _ <- customMain initialVty buildVty (Just chan) app (Model.init (max 3 speed))
+  _ <- customMain initialVty buildVty (Just chan) app (Model.init (min defaultSpeed (max 3 speed)))
   return ()
 
 app :: App PlayState Tick String
