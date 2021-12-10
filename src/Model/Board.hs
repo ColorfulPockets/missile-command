@@ -290,9 +290,8 @@ delTrailIter (e@((Pos i j), c):xs) = do
 trailHelper :: [(Pos, CellContents)] -> Board -> Int -> IO [(Pos, CellContents)]
 trailHelper [] b _ = do
                       c <- randomRIO ('A', 'Z') :: IO Char
-                      i <- randomRIO (0, dim) :: IO Int
-                      cols <- uniqueCols b
-                      let (Pos _ y) = cols !! i in return [((Pos 1 y), (Ms c))]
+                      (Pos _ y) <- fetcher b
+                      return [((Pos 1 y), (Ms c))]
 
 trailHelper xs b n = do
   i <- randomRIO (0, n) :: IO Int
