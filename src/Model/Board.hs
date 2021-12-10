@@ -30,9 +30,6 @@ module Model.Board
   , travel
   , result
 
-  --, thingPos
-  --, botThing
-
     -- * Moves
   , up
   , down
@@ -119,8 +116,8 @@ itemsPos :: Board -> [Pos]
 itemsPos board = [p | p <- playAreaPos, M.member p board]
 
 -- List of columns that don't have a missile
-uniqueCols :: Board -> [Pos]
-uniqueCols b = [Pos dim c | c <- [1..dim], notIn b dim c]
+uniqueCols :: Board -> IO [Pos]
+uniqueCols b = return [Pos dim c | c <- [1..dim], notIn b dim c]
 
 -- tested
 notIn :: Board -> Int -> Int -> Bool
@@ -292,10 +289,10 @@ delTrailIter (e@((Pos i j), c):xs) = do
 -- Spawns new missiles
 trailHelper :: [(Pos, CellContents)] -> Board -> Int -> IO [(Pos, CellContents)]
 trailHelper [] b _ = do
-                      c <- randomRIO ('A', 'Z') :: IO Char -- TODO
-                      return [((Pos 1 y), (Ms c))]
-  where
-    (Pos _ y) = uniqueCols b !! 0
+                      c <- randomRIO ('A', 'Z') :: IO Char
+                      i <- randomRIO (0, dim) :: IO Int
+                      cols <- uniqueCols b
+                      let (Pos _ y) = cols !! i in return [((Pos 1 y), (Ms c))]
 
 trailHelper xs b n = do
   i <- randomRIO (0, n) :: IO Int
@@ -311,15 +308,12 @@ trailHelper xs b n = do
 -- Fetch a random column that doesn't have a missile
 fetcher :: Board -> IO Pos
 fetcher b = do
-  allPos <- converter b
+  allPos <- uniqueCols b
   case allPos of
     [] -> return (Pos 0 0)
     _  -> do
       i <- randomRIO (0, (length allPos - 1))
       return (allPos !! i)
-
-converter :: Board -> IO [Pos]
-converter b = return (uniqueCols b)
 
 
 ------------------
