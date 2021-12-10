@@ -65,7 +65,7 @@ type Board = M.Map Pos CellContents
 
 checkMatch :: Board -> Char -> Pos -> Bool  -- check if the char is in this position
 checkMatch board c p = case M.lookup p board of 
-  Just (O l) -> l == c
+  Just (Ms l) -> l == c
   _          -> False
 
 findCharPos :: Board -> Char -> [Pos] -- returns a list of positions for that letter
@@ -73,8 +73,8 @@ findCharPos board c = [ p | p <- positions, checkMatch board c p]
 
 data CellContents 
   = X 
-  | O { letter :: Char }
-  | F {distance :: Int, timer :: Int, dir :: Direct}
+  | Ms { letter :: Char }
+  | Fire {distance :: Int, timer :: Int, dir :: Direct}
   | None
   deriving (Eq, Show)
 
@@ -127,7 +127,7 @@ notIn :: Board -> Int -> Int -> Bool
 notIn _ 0 _ = True
 notIn b r c = if M.notMember (Pos r c) b then notIn b (r - 1) c 
   else case b ! (Pos r c) of
-    Just (O _) -> False
+    Just (Ms _) -> False
     _ -> True
 
 init :: Board
@@ -164,23 +164,23 @@ iterR b []       = b
 iterR b ((pos, contents):xs) = iterR b' xs
   where
     b' = case contents of
-      (O _) -> fst (remove b pos)
+      (Ms _) -> fst (remove b pos)
       _     -> b
 
 
 iterI :: Board -> [(Pos, CellContents)] -> Board
 iterI b []       = b
 iterI b ((pos, contents):xs) = case b ! pos of
-  Just (F _ _ _) -> iterI b' xs
+  Just (Fire _ _ _) -> iterI b' xs
     where
       b' =  case contents of
-        (O _) -> shootSurrounding b pos
+        (Ms _) -> shootSurrounding b pos
         _     -> b
 
   _ -> iterI b' xs
     where
       b' = case contents of 
-        (O _) -> M.insert pos contents b
+        (Ms _) -> M.insert pos contents b
         _     -> b
 
 -- tested
@@ -202,7 +202,7 @@ bottomRow = [Pos dim c | c <- [1..dim]]
 -- tested -- Eric
 isMissile :: Maybe CellContents -> Bool
 isMissile c = case c of
-  Just (O _) -> True
+  Just (Ms _) -> True
   _   -> False
 
 isX :: Maybe CellContents -> Bool
@@ -293,7 +293,7 @@ delTrailIter (e@((Pos i j), c):xs) = do
 trailHelper :: [(Pos, CellContents)] -> Board -> Int -> IO [(Pos, CellContents)]
 trailHelper [] b _ = do
                       c <- randomRIO ('A', 'Z') :: IO Char -- TODO
-                      return [((Pos 1 y), (O c))]
+                      return [((Pos 1 y), (Ms c))]
   where
     (Pos _ y) = uniqueCols b !! 0
 
@@ -303,7 +303,7 @@ trailHelper xs b n = do
     do
       (Pos _ y) <- fetcher b
       c <- randomRIO ('A', 'Z') :: IO Char
-      return (if y == 0 then xs else ((Pos 1 y), (O c)) : xs)
+      return (if y == 0 then xs else ((Pos 1 y), (Ms c)) : xs)
   else
     return xs
 
@@ -333,22 +333,22 @@ shootSurrounding b p = explodeAround p b'''''2
     (b''    , c'')     = remove b'    (up p) -- up
 
     b''2               = case c'' of 
-      (O _)   ->  shootSurrounding b'' (up p) 
+      (Ms _)   ->  shootSurrounding b'' (up p) 
       _       -> b''
     (b'''   , c''')    = remove b''2   (down p) -- down
 
     b'''2              = case c''' of
-      (O _)   -> shootSurrounding b''' (down p)
+      (Ms _)   -> shootSurrounding b''' (down p)
       _       ->  b'''
     (b''''  , c'''')   = remove b'''2  (left p) -- left
 
     b''''2             = case c'''' of
-      (O _)   ->  shootSurrounding b'''' (left p) 
+      (Ms _)   ->  shootSurrounding b'''' (left p) 
       _       ->  b''''
     (b''''' , c''''')  = remove b''''2 (right p) -- right
 
     b'''''2            = case c''''' of
-      (O _)   -> shootSurrounding b''''' (right p) 
+      (Ms _)   -> shootSurrounding b''''' (right p) 
       _       -> b'''''
 
 -- Generates the initial explosion ring around a shot missile
@@ -356,13 +356,13 @@ shootSurrounding b p = explodeAround p b'''''2
 explodeAround :: Pos -> Board -> Board
 explodeAround p b = b'''''
   where 
-    b' = put b (F 1 initialTimer DirUp) (up p) -- up
-    b'' = put b'  (F 1 initialTimer DirDown) (down p) -- down
-    b''' = put b'' (F 1 initialTimer DirLeft) (left p) -- left
-    b'''' = put b''' (F 1 initialTimer DirRight) (right p) -- right
-    b''''' = put b'''' (F explosionRadius initialTimer DirUp) p
+    b' = put b (Fire 1 initialTimer DirUp) (up p) -- up
+    b'' = put b'  (Fire 1 initialTimer DirDown) (down p) -- down
+    b''' = put b'' (Fire 1 initialTimer DirLeft) (left p) -- left
+    b'''' = put b''' (Fire 1 initialTimer DirRight) (right p) -- right
+    b''''' = put b'''' (Fire explosionRadius initialTimer DirUp) p
 -- Remember -- CellContents F have format:
---    (F radius timer direction)
+--    (Fire radius timer direction)
 --    Timer counts down from the radius so that the farthest cells are filled for the shortest time
 --    Radius counts up to the radius to know when it has reached it
 
@@ -377,14 +377,14 @@ moveEachExplosion :: [Pos] -> Board -> Board
 moveEachExplosion fs b = case fs of
   []  -> b
   (p : ps) -> case b ! p of
-    Just (F i t d) -> 
+    Just (Fire i t d) -> 
       if i < explosionRadius 
       then moveEachExplosion ps (propogateInDirection p i t d b' )
       else moveEachExplosion ps b'
       where 
         b' = case t of
           0   -> b''
-          _   -> put b'' (F explosionRadius (t-1) d) p 
+          _   -> put b'' (Fire explosionRadius (t-1) d) p 
           -- setting the radius to max means this won't propogate after the first time it does
         (b'', _) = remove b p
     _       -> moveEachExplosion ps b
@@ -414,14 +414,14 @@ propogateQuadrant b p dir i t posDir1 posDir2 = b''''
   where 
     (b', c')     = remove b (posDir1 p)
     b'2          = case c' of 
-      (O _) -> shootSurrounding b' (posDir1 p) 
+      (Ms _) -> shootSurrounding b' (posDir1 p) 
       _     -> b'
     (b'', c'')    = remove b'2 (posDir2 p)
     b''2          = case c'' of 
-      (O _) -> shootSurrounding b'' (posDir2 p) 
+      (Ms _) -> shootSurrounding b'' (posDir2 p) 
       _     -> b''
-    b'''        = put b''2 (F (i+1) (t-1) dir) (posDir1 p)
-    b''''       = put b''' (F (i+1) (t-1) dir) (posDir2 p)
+    b'''        = put b''2 (Fire (i+1) (t-1) dir) (posDir1 p)
+    b''''       = put b''' (Fire (i+1) (t-1) dir) (posDir2 p)
 
 -- Returns a list of Pos where the CellContents is F
 -- tested
@@ -429,7 +429,7 @@ getFs :: [(Pos, CellContents)] -> [Pos]
 getFs b = case b of
   []  -> []
   ((p, c) : t) -> case c of
-    (F _ _ _) -> p : (getFs t)
+    (Fire _ _ _) -> p : (getFs t)
     _       -> getFs t
 
 
