@@ -68,7 +68,7 @@ progressBoard s = case result (psBoard s) of
   Lose -> return (psBoard s)
   _    -> case psMoveMissiles s of
     0 -> do
-      b <- putAndRemove2 (psBoard s) <$> getPos s-- this line moves all the misiles downward
+      b <- putAndRemove (psBoard s) <$> getPos s-- this line moves all the misiles downward
       return (moveExplosions b)
     _ -> return (moveExplosions (psBoard s))
 

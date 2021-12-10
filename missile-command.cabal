@@ -11,8 +11,9 @@ cabal-version:       >=1.10
 
 Library
   ghc-options:        -W
-  exposed-modules:    Model.Board
-
+  exposed-modules:    Model.Board,
+                      Model.Score
+                      
   Default-Extensions: OverloadedStrings
 
   -- other-extensions:
@@ -57,4 +58,5 @@ test-suite test
                     process,
                     missile-command,
                     random
-  other-modules:    Common 
+  other-modules:    Common,
+                    BoardVars

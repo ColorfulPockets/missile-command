@@ -17,15 +17,16 @@ module Model.Board
   , put
   , remove
   , notNone
+  , notIn
   , positions
-  , emptyPositions
+  , getFs
   
   , findCharPos
   , getMissiles
   , getMissilesMinusTopRow
   , bottomRowHasMissile
 
-  , putAndRemove2
+  , putAndRemove
   , travel
   , result
 
@@ -44,6 +45,10 @@ module Model.Board
 
   -- Visual
   , gameOverBoard
+
+  -- For testing
+  , isMissile
+  , posWithCellContents
   )
   where
 
@@ -102,12 +107,12 @@ initialTimer = 10
 positions :: [Pos]
 positions = [ Pos r c | r <- [1..dim], c <- [1..dim] ] 
 
-rTop :: [Pos]
-rTop = [Pos r 4 | r <- [1..dim]]
+--rTop :: [Pos]
+--rTop = [Pos r 4 | r <- [1..dim]]
 
 -- tested -- Eric
-emptyPositions :: Board -> [Pos]
-emptyPositions board  = [ p | p <- rTop, M.notMember p board]
+--emptyPositions :: Board -> [Pos]
+--emptyPositions board  = [ p | p <- rTop, M.notMember p board]
 
 -- tested
 notNone :: CellContents -> Bool
@@ -125,7 +130,7 @@ thingPos board = [p | p <- mostPos, M.member p board]
 botThing :: Board -> [Pos]
 botThing b = [Pos dim c | c <- [1..dim], notIn b dim c]
 
--- tested --Bhavani
+-- tested
 notIn :: Board -> Int -> Int -> Bool
 notIn _ 0 _ = True
 notIn b r c = if M.notMember (Pos r c) b then notIn b (r - 1) c 
@@ -156,8 +161,8 @@ put board xo pos@(Pos r c) = case M.lookup pos board of
     | otherwise -> board
 
 -- tested -- Eric
-putAndRemove2 :: Board -> ([(Pos, CellContents)], [(Pos, CellContents)]) -> Board
-putAndRemove2 board (pos, toRemove) = (iterI b' pos)
+putAndRemove :: Board -> ([(Pos, CellContents)], [(Pos, CellContents)]) -> Board
+putAndRemove board (pos, toRemove) = iterI b' pos
   where
     b' = iterR board toRemove
 
@@ -177,7 +182,7 @@ iterI b ((pos, contents):xs) = case b ! pos of
   Just (F _ _ _) -> iterI b' xs
     where
       b' =  case contents of
-        (O _) -> (shootSurrounding b pos)
+        (O _) -> shootSurrounding b pos
         _     -> b
   _ -> iterI b' xs
     where
@@ -191,7 +196,7 @@ remove board pos = case M.lookup pos board of
   Nothing -> (board, None)
   Just c  -> ((M.delete pos board), c)
 
--- tested -- Bhavani
+-- tested
 result :: Board -> Result Board
 result b 
   | bottomRowHasMissile b = Lose
@@ -222,23 +227,25 @@ gameOverDisplayed b = elem True (fmap isX (fmap (b !) mostPos))
 -------------------------------------------------------------------------------
 -- | Moves 
 -------------------------------------------------------------------------------
-
+-- tested
 up :: Pos -> Pos 
 up p = p 
   { pRow = max 1 (pRow p - 1) 
   } 
 
--- tested -- Bhavani
+-- tested
 down :: Pos -> Pos
 down p = p 
   { pRow = min dim (pRow p + 1) 
   } 
 
+-- tested
 left :: Pos -> Pos 
 left p = p 
   { pCol   = max 1 (pCol p - 1) 
   } 
 
+-- tested
 right :: Pos -> Pos 
 right p = p 
   { pCol = min dim (pCol p + 1) 
@@ -256,13 +263,12 @@ travel b n = do
   where
     thingsOnBoard = thingPos b
     thingsWithCells = posWithCellContents thingsOnBoard b
-    --p = trailHelper t b
 
 -- tested -- Eric
 -- Takes a list of Pos, and a board, and returns a list of (Pos, CellContents) at those pos on the board
 posWithCellContents :: [Pos] -> Board -> [(Pos, CellContents)]
 posWithCellContents [] _ = []
-posWithCellContents (p:ps) b = case (b ! p) of
+posWithCellContents (p:ps) b = case b ! p of
   Just c  -> (p, c) : (posWithCellContents ps b)
   _       -> posWithCellContents ps b
 
@@ -430,7 +436,7 @@ propogateQuadrant b p dir i t posDir1 posDir2 = b''''
     b''''       = put b''' (F (i+1) (t-1) dir) (posDir2 p)
 
 -- Returns a list of Pos where the CellContents is F
--- tested -- Bhavani
+-- tested
 getFs :: [(Pos, CellContents)] -> [Pos]
 getFs b = case b of
   []  -> []
