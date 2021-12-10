@@ -27,20 +27,23 @@ data PlayState = PS
   , psMoveMissiles :: Int       -- Loops between 0 and ; missiles only move when it's 0
   , psTypeCooldown :: Int       -- Counts down the typing cooldown
   , psMissileCount :: Int       -- Keeps track of number of missiles currently on the board
+
+  , startSpeed     :: Int
   , prog           :: Int       -- Degree of randomness for spawning missiles
   , tickC          :: Int       -- Tick count to progress randomness
   } 
 
-init :: PlayState
-init = PS 
+init :: Int -> PlayState
+init n = PS 
   { psScore  = Score.init 0
   , psBoard  = Board.init
   , psPos    = head (reverse Board.positions) 
   , psResult = Board.Cont ()
   , psMoveMissiles = 0
   , psTypeCooldown = 0
-  , psMissileCount = 0 
-  , prog           = 100
+  , psMissileCount = 0
+  , startSpeed     = n
+  , prog           = n
   , tickC          = 0
   }
 

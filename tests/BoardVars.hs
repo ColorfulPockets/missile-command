@@ -20,13 +20,13 @@ sbResult = M.fromList sbNew
 sbNew :: [(Pos, CellContents)]
 sbNew = 
     [
-        (Pos 4 8, O 'x')
+        (Pos 4 8, Ms 'x')
     ]
 
 sbOld :: [(Pos, CellContents)]
 sbOld = 
     [
-        (Pos 3 8, O 'x')
+        (Pos 3 8, Ms 'x')
     ]
 
 sbPos :: [Pos] -- posWithCellContents, getMissiles
@@ -49,19 +49,19 @@ advResult = M.fromList advNew
 advNew :: [(Pos, CellContents)]
 advNew = 
     [
-        (Pos 7 49, O 'W'),
-        (Pos 4 42, O 'E'),
-        (Pos 30 4, O 'F'),
-        (Pos 2 1, O 'Q')
+        (Pos 7 49, Ms 'W'),
+        (Pos 4 42, Ms 'E'),
+        (Pos 30 4, Ms 'F'),
+        (Pos 2 1, Ms 'Q')
     ]
 
 advOld :: [(Pos, CellContents)]
 advOld = 
     [
-        (Pos 1 1, O 'Q'),
-        (Pos 3 42, O 'E'),
-        (Pos 6 49, O 'W'),
-        (Pos 29 4, O 'F')
+        (Pos 1 1, Ms 'Q'),
+        (Pos 3 42, Ms 'E'),
+        (Pos 6 49, Ms 'W'),
+        (Pos 29 4, Ms 'F')
     ]
 
 advPos :: [Pos] -- posWithCellContents, getMissiles
@@ -79,10 +79,10 @@ msX :: Maybe CellContents
 msX = listToMaybe [X]
 
 msO :: Maybe CellContents
-msO = listToMaybe [O 'Z']
+msO = listToMaybe [Ms 'Z']
 
 msF :: Maybe CellContents
-msF = listToMaybe [F 1 2 DirUp]
+msF = listToMaybe [Fire 1 2 DirUp]
 
 msN :: Maybe CellContents
 msN = listToMaybe [None]
@@ -112,9 +112,9 @@ pwccMissiles =
 pwccContents :: [(Pos, CellContents)]
 pwccContents = 
     [
-        (Pos 1 2, O 'x'),
-        (Pos 3 4, F 1 2 DirDown),
+        (Pos 1 2, Ms 'x'),
+        (Pos 3 4, Fire 1 2 DirDown),
         (Pos 19 39, X),
-        (Pos 41 2, O 'Z'),
+        (Pos 41 2, Ms 'Z'),
         (Pos 37 24, None)
     ]

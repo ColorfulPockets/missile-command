@@ -16,8 +16,9 @@ control :: PlayState -> BrickEvent n Tick -> EventM n (Next PlayState)
 control s ev = case ev of 
   AppEvent Tick                   -> nextS s =<< liftIO (progressBoard s)
   T.VtyEvent (V.EvKey V.KEnter _) -> case result (psBoard s) of
-    Lose -> nextS Model.init Model.Board.init   
+    Lose -> nextS (Model.init (startSpeed s)) Model.Board.init   
     _    -> Brick.continue s
+
   T.VtyEvent (V.EvKey V.KEsc _)   -> Brick.halt s
   T.VtyEvent (V.EvKey (V.KChar c) _) -> case psTypeCooldown s of
     0 -> nextS (s {psTypeCooldown = cooldownLength}) =<< liftIO (shootChar s (toUpper c))    -- when a certain letter is clicked, that missile is shot
