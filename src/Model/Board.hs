@@ -405,6 +405,15 @@ propogateInDirection p i t d b =
     DirRight      ->  propogateQuadrant b p DirRight i t right down
     DirDown       ->  propogateQuadrant b p DirDown i t down left
     DirLeft       ->  propogateQuadrant b p DirLeft i t left up
+
+
+{-
+      U
+    L U U
+  L L C R R
+    D D R
+      D
+-} 
     
 propogateQuadrant :: Board -> Pos -> Direct -> Int -> Int -> (Pos -> Pos) -> (Pos -> Pos) -> Board
 propogateQuadrant b p dir i t posDir1 posDir2 = b''''
