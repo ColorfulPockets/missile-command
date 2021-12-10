@@ -22,7 +22,7 @@ view' s =
     borderWithLabel ((str (header)) <+> (status)) $
       vTile [ mkRow s row | row <- [1..dim] ]
         where 
-          header = printf " Missile Command! Missiles Destroyed: = %s ---- Defenses: "
+          header = printf " Keyboard Command! Missiles Destroyed: = %s ---- Defenses: "
             (show (psScore s)) 
           status = case ((psTypeCooldown s) == 0) of
             True  -> (blackForeground (greenBackground (str " Active "))) <+> (str "  ")
