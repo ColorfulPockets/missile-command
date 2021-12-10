@@ -3,18 +3,20 @@
 
 import Test.Tasty
 import Common
+import BoardVars
 import Prelude hiding (maximum)
 import Model.Board
 import Model.Score as GameScore
 
 main :: IO ()
 main = runTests 
-  [ boardTests,
+  [
+    boardTests,
     scoreTests
   ]
 
 boardTests ::  Common.Score -> TestTree
-boardTests sc = testGroup "Board module"
+boardTests sc = testGroup "Board Module"
   [ scoreTest (down, (Pos 5 1), (Pos 6 1), 2, "down"),
     scoreTest (up, (Pos 5 1), (Pos 4 1), 2, "up"),
     scoreTest (left, (Pos 1 5), (Pos 1 4), 2, "left"),
@@ -42,7 +44,24 @@ boardTests sc = testGroup "Board module"
     scoreTest (explodeAround expPos, b10, bExploded, 2, "explodeAround1"),
     scoreTest (explodeAround expPos2, b10, bExploded2, 2, "explodeAround2"),
     scoreTest (getMissilesMinusTopRow, b10Top, misInB10r, 2, "getMissilesMinusTopRow1"),
-    scoreTest (getMissilesMinusTopRow, b10, misInB10r, 2, "getMissilesMinusTopRow2")
+    scoreTest (getMissilesMinusTopRow, b10, misInB10r, 2, "getMissilesMinusTopRow2"),
+
+
+    scoreTest (putAndRemove simpleBoard, sbShift, sbResult, 2, "simple-move"),
+    scoreTest (putAndRemove advancedBoard, advShift, advResult, 2, "advanced-move"),
+
+    scoreTest (isMissile, msX, False, 1, "check-x"),
+    scoreTest (isMissile, msO, True, 1, "check-o"),
+    scoreTest (isMissile, msF, False, 1, "check-f"),
+    scoreTest (isMissile, msN, False, 1, "check-n"),
+
+    scoreTest (posWithCellContents sbPos, simpleBoard, sbOld, 2, "simple-pos-cc"),
+    scoreTest (posWithCellContents advPos, advancedBoard, advOld, 2, "advanced-pos-cc"),
+    scoreTest (posWithCellContents pwccPos, pwccBoard, pwccContents, 2, "all-pos-cc"),
+
+    scoreTest (getMissiles, simpleBoard, sbPos, 2, "simple-missiles"),
+    scoreTest (getMissiles, advancedBoard, advPos, 2, "advanced-missiles"),
+    scoreTest (getMissiles, pwccBoard, pwccMissiles, 2, "all-missiles")
   ]
   where
     scoreTest :: (Show b, Eq b) => (a -> b, a, b, Int, String) -> TestTree
@@ -79,7 +98,7 @@ boardTests sc = testGroup "Board module"
     expPos2 = (Pos 25 1)
 
 scoreTests ::  Common.Score -> TestTree
-scoreTests sc = testGroup "Board module"
+scoreTests sc = testGroup "Score Module"
   [ scoreTest (add, sco, 101, 2, "add"),
     scoreTest ((\_ -> addVar sco 10), 0, 110, 2, "addVar-1"),
     scoreTest ((\_ -> addVar sco (-4)), 0, 96, 2, "addVar-2")

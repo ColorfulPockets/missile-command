@@ -19,7 +19,6 @@ module Model.Board
   , notNone
   , notIn
   , positions
-  , emptyPositions
   , getFs
   
   , findCharPos
@@ -27,7 +26,7 @@ module Model.Board
   , getMissilesMinusTopRow
   , bottomRowHasMissile
 
-  , putAndRemove2
+  , putAndRemove
   , travel
   , result
 
@@ -46,6 +45,10 @@ module Model.Board
 
   -- Visual
   , gameOverBoard
+
+  -- For testing
+  , isMissile
+  , posWithCellContents
   )
   where
 
@@ -104,12 +107,12 @@ initialTimer = 10
 positions :: [Pos]
 positions = [ Pos r c | r <- [1..dim], c <- [1..dim] ] 
 
-rTop :: [Pos]
-rTop = [Pos r 4 | r <- [1..dim]]
+--rTop :: [Pos]
+--rTop = [Pos r 4 | r <- [1..dim]]
 
 -- tested -- Eric
-emptyPositions :: Board -> [Pos]
-emptyPositions board  = [ p | p <- rTop, M.notMember p board]
+--emptyPositions :: Board -> [Pos]
+--emptyPositions board  = [ p | p <- rTop, M.notMember p board]
 
 -- tested
 notNone :: CellContents -> Bool
@@ -158,8 +161,8 @@ put board xo pos@(Pos r c) = case M.lookup pos board of
     | otherwise -> board
 
 -- tested -- Eric
-putAndRemove2 :: Board -> ([(Pos, CellContents)], [(Pos, CellContents)]) -> Board
-putAndRemove2 board (pos, toRemove) = (iterI b' pos)
+putAndRemove :: Board -> ([(Pos, CellContents)], [(Pos, CellContents)]) -> Board
+putAndRemove board (pos, toRemove) = iterI b' pos
   where
     b' = iterR board toRemove
 
@@ -179,7 +182,7 @@ iterI b ((pos, contents):xs) = case b ! pos of
   Just (F _ _ _) -> iterI b' xs
     where
       b' =  case contents of
-        (O _) -> (shootSurrounding b pos)
+        (O _) -> shootSurrounding b pos
         _     -> b
   _ -> iterI b' xs
     where
@@ -265,7 +268,7 @@ travel b n = do
 -- Takes a list of Pos, and a board, and returns a list of (Pos, CellContents) at those pos on the board
 posWithCellContents :: [Pos] -> Board -> [(Pos, CellContents)]
 posWithCellContents [] _ = []
-posWithCellContents (p:ps) b = case (b ! p) of
+posWithCellContents (p:ps) b = case b ! p of
   Just c  -> (p, c) : (posWithCellContents ps b)
   _       -> posWithCellContents ps b
 
